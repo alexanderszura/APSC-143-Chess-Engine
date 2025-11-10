@@ -1,0 +1,62 @@
+#ifndef APSC143__TOOLS_H
+#define APSC143__TOOLS_H
+
+#include <stdbool.h>
+
+#define or ||
+#define and &&
+
+#define GRID_SIZE 8
+#define BOARD_SIZE GRID_SIZE * GRID_SIZE
+
+enum chess_player
+{
+    PLAYER_WHITE,
+    PLAYER_BLACK,
+};
+
+enum chess_piece
+{
+    PIECE_PAWN,
+    PIECE_KNIGHT,
+    PIECE_BISHOP,
+    PIECE_ROOK,
+    PIECE_QUEEN,
+    PIECE_KING,
+};
+
+struct chess_board
+{
+    enum chess_player next_move_player;
+
+    bool piece_present[BOARD_SIZE];
+
+    enum chess_player piece_color[BOARD_SIZE];
+    enum chess_piece piece_id    [BOARD_SIZE];
+
+    bool white_can_castle;
+    bool black_can_castle;
+};
+
+struct chess_move
+{
+    enum chess_piece piece_id; // The moving piece id
+
+    int from_square;     // From which square id is the piece moving from
+    int to_square;       // To   which square id is the piece moving to
+    
+    bool is_capture;     // True if the moving piece is capturing a piece
+
+    int promotes_to_id;  // If a pawn is promoted, the new piece id; -1 otherwise
+
+    bool is_castle;      // True if the move is a castle
+    bool is_long_castle; // True if the move is a long castle
+};
+
+int from_cords(int x, int y);
+bool from_id(int id, int *x, int *y);
+int from_code(char *code);
+
+void display_board(struct chess_board board);
+
+#endif

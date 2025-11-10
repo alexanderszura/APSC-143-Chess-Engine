@@ -1,41 +1,20 @@
+#include <stdbool.h>
+#include "tools.h"
+
 #ifndef APSC143__BOARD_H
 #define APSC143__BOARD_H
-
-enum chess_player
-{
-    PLAYER_WHITE,
-    PLAYER_BLACK,
-};
 
 // Gets a lowercase string denoting the player.
 const char *player_string(enum chess_player player);
 
-enum chess_piece
-{
-    PIECE_PAWN,
-    PIECE_KNIGHT,
-    PIECE_BISHOP,
-    PIECE_ROOK,
-    PIECE_QUEEN,
-    PIECE_KING,
-};
+char player_char(enum chess_player player);
 
 // Gets a lowercase string denoting the piece type.
 const char *piece_string(enum chess_piece piece);
 
-struct chess_board
-{
-    enum chess_player next_move_player;
+char piece_char(enum chess_piece piece);
 
-    // TODO: what other fields are needed?
-};
-
-struct chess_move
-{
-    enum chess_piece piece_type;
-
-    // TODO: what other fields are needed?
-};
+const char *color_string(enum chess_player color);
 
 // Initializes the state of the board for a new chess game.
 void board_initialize(struct chess_board *board);

@@ -1,10 +1,13 @@
 #include "board.h"
 #include "parser.h"
+#include "tools.h"
 
 int main()
 {
     struct chess_board board;
     board_initialize(&board);
+
+    display_board(board);
 
     struct chess_move move;
     while (parse_move(&move))
