@@ -32,6 +32,23 @@ bool from_id(int id, int *x, int *y)
 
 int from_code(char *code)
 {
+    char letter = *code++;
+    char number = *code - '0';
+
+    int i = 0;
+    for (int c = 'A'; c <= 'H'; c++) {
+        if (c == letter)
+            return from_cords(i, number - 1);
+        i++;
+    }
+
+    i = 0;
+    for (int c = 'a'; c <= 'h'; c++) {
+        if (c == letter)
+            return from_cords(i, number - 1);
+        i++;
+    }
+
     return 0;
 }
 
