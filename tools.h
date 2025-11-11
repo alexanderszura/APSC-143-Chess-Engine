@@ -5,6 +5,7 @@
 
 #define or ||
 #define and &&
+#define not !
 
 #define GRID_SIZE 8
 #define BOARD_SIZE GRID_SIZE * GRID_SIZE
@@ -53,10 +54,20 @@ struct chess_move
     bool is_long_castle; // True if the move is a long castle
 };
 
+struct dyanmic_array 
+{
+    unsigned long *values;
+    unsigned int current_index;
+};
+
 int from_cords(int x, int y);
 bool from_id(int id, int *x, int *y);
 int from_code(char *code);
 
 void display_board(struct chess_board board);
+
+unsigned long hash(unsigned char *str);
+bool append_dynamic(      struct dyanmic_array *arr, unsigned long value);
+bool search_dynamic(const struct dyanmic_array *arr, unsigned long value);
 
 #endif

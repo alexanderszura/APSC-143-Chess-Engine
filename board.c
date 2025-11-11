@@ -102,7 +102,6 @@ void board_initialize(struct chess_board *board)
     /* --------------- Setup Pawns --------------- */
 
     /* --------------- Bottom Rank --------------- */
-
     enum chess_piece bottom_rank[] = {PIECE_ROOK, PIECE_KNIGHT, PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK};
 
     white_cord = from_cords(0, 0);
@@ -118,8 +117,18 @@ void board_initialize(struct chess_board *board)
         board->piece_present[white_cord++] = true;
         board->piece_present[black_cord++] = true;
     }
-
     /* --------------- Bottom Rank --------------- */
+}
+
+int *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+{
+    struct dyanmic_array moves;
+    
+    int x, y;
+    if (not from_id(id, &x, &y))
+        return NULL;
+
+    return moves.values;
 }
 
 void board_complete_move(const struct chess_board *board, struct chess_move *move)

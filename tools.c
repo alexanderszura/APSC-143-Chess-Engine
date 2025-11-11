@@ -1,7 +1,8 @@
 #include "tools.h"
-#include <stdbool.h>
+#include "stdbool.h"
 #include "board.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 int from_cords(int x, int y)
 {
@@ -67,4 +68,57 @@ void display_board(struct chess_board board)
 
         printf("\n");
     }
+}
+
+/**
+ * York University djb2 algorithm
+ * http://www.cse.yorku.ca/~oz/hash.html
+ */
+unsigned long hash(unsigned char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while (c = *str++)
+        hash = ((hash << 5) + hash) + c;
+
+    return hash;
+}
+
+bool append_dynamic(struct dyanmic_array *arr, unsigned long value)
+{
+    if (arr == NULL)
+    {
+        arr->values = malloc(sizeof(value));
+        arr->current_index = 0;
+
+        if (arr->values == NULL) 
+        {
+            printf("Error mallocating memory with value: %lu", value);
+            return false;
+        }
+    } else {
+        unsigned long *temp = realloc(arr->values, arr->current_index * sizeof(value));
+
+        if (temp == NULL) 
+        {
+            printf("Error reallocating memory with value: %lu at index: %u", value, arr->current_index);
+            return false;
+        }
+
+        arr->values = temp;
+    }
+
+    arr->values[arr->current_index++] = value;
+
+    return true;
+}
+
+bool search_dynamic(const struct dyanmic_array *arr, unsigned long value)
+{
+    for (unsigned int i = 0; i < arr->current_index - 1; i++)
+        if (arr->values[i] == value)
+            return true;
+
+    return false;
 }
