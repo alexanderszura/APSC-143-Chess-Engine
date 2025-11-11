@@ -5,6 +5,7 @@
 
 #define or ||
 #define and &&
+#define elif else if
 
 #define GRID_SIZE 8
 #define BOARD_SIZE GRID_SIZE * GRID_SIZE
@@ -58,5 +59,7 @@ bool from_id(int id, int *x, int *y);
 int from_code(char *code);
 
 void display_board(struct chess_board board);
+
+void parse_error(char c);
 
 #endif
