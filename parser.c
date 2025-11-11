@@ -1,26 +1,83 @@
 #include "parser.h"
+#include "parser_helpers.h"
 #include <stdio.h>
 #include "panic.h"
 
+
 bool parse_move(struct chess_move *move)
 {
-    char c;
+    reset_fields(move);
+    skip_spaces();
 
-    // Get the first character of the move, ignoring any initial spaces.
-    do
-    {
-        c = getc(stdin);
-    } while (c == ' ');
+    char c = getc(stdin);
 
     // Check if we are at the end of input.
     if (c == '\n' || c == '\r')
         return false;
 
-    switch (c)
-    {
-    // TODO: parse the move, starting from the first character. You are free to
-    // start from this switch/case as a template or use a different approach.
-    default:
-        panicf("parse error at character '%c'\n", c);
+    // castle check 
+    if (c == 'O') {
+        ungetc(c, stdin);
+        parse_castle(move);
+        return true;
+    }
+
+    if (is_piece(c)) {
+
+        // determine typeof piece
+        switch (c) {
+            case 'N': move->piece_id = PIECE_KNIGHT; break;
+            case 'B': move->piece_id = PIECE_BISHOP; break;
+            case 'R': move->piece_id = PIECE_ROOK; break;
+            case 'Q': move->piece_id = PIECE_QUEEN; break;
+            case 'K': move->piece_id = PIECE_KING; break;
+            default: parse_error(c);
+        }
+
+        // check for capture
+        if (parse_capture()) {
+            move->is_capture = true;
+            getc(stdin);
+        }
+
+        move->to_square = parse_square();
+        move->promotes_to_id = parse_promotion();
+
+        return true;
+    }
+
+        // pawn parsing 
+        if (is_file(c)) {
+            ungetc(c, stdin);
+            move->piece_id = PIECE_PAWN;
+
+            char start_file = getc(stdin);
+            if (parse_capture()) {
+                move->is_capture = true;
+                getc(stdin);
+            } else {
+                ungetc(start_file, stdin);
+            }
+                move->to_square = parse_square();
+                move->promotes_to_id = parse_promotion();
+    
+                return true;
+        }
+        parse_error(c);
+        return false;
+
+    }
+
+// testing block
+void test_parser() {
+    struct chess_move move;
+    
+    // Test inputs: "Ne4", "exd5", "O-O"
+    printf("Running parser tests...\n");
+    
+    if (parse_move(&move)) {
+        printf("Move parsed: piece=%d, to=%d, capture=%d\n", 
+               move.piece_id, move.to_square, move.is_capture);
     }
 }
+

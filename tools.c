@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "board.h"
 #include "stdio.h"
+#include "panic.h"
 
 int from_cords(int x, int y)
 {
@@ -50,4 +51,8 @@ void display_board(struct chess_board board)
 
         printf("\n");
     }
+}
+
+void parse_error(char c) {
+    panicf("parse error at character '%c'\n", c);
 }
