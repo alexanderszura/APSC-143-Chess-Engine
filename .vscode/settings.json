@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "board.h": "c",
+        "stdio.h": "c",
+        "stdbool.h": "c"
+    },
+    "editor.formatOnSave": false,
+    "workbench.tree.indent": 8,
+    "editor.detectIndentation": false,
+    "editor.indentSize": 4
+}
