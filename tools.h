@@ -6,6 +6,7 @@
 #define or ||
 #define and &&
 #define not !
+#define elif else if
 
 #define GRID_SIZE 8
 #define BOARD_SIZE GRID_SIZE * GRID_SIZE
@@ -70,5 +71,7 @@ unsigned long hash(unsigned char *str);
 bool init_dynamic(struct dynamic_array *arr);
 bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
+
+void parse_error(char c);
 
 #endif

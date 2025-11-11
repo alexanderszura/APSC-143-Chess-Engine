@@ -8,6 +8,7 @@
 // and can be uninitialized. If there is a syntax error or the end of the input
 // is reached, returns false; the contents of *move in such a case are
 // unspecified.
+
 bool parse_move(struct chess_move *move);
 
 #endif

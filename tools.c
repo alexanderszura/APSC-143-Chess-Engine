@@ -3,6 +3,7 @@
 #include "board.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "panic.h"
 
 int from_cords(int x, int y)
 {
@@ -128,4 +129,6 @@ bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
             return true;
 
     return false;
+void parse_error(char c) {
+    panicf("parse error at character '%c'\n", c);
 }
