@@ -2,7 +2,8 @@
     "files.associations": {
         "board.h": "c",
         "stdio.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "tools.h": "c"
     },
     "editor.formatOnSave": false,
     "workbench.tree.indent": 8,

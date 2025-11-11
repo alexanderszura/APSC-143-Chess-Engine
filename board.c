@@ -1,6 +1,7 @@
 #include "board.h"
 #include "tools.h"
 #include "stdio.h"
+#include "dynamic_array.h"
 
 const char *player_string(enum chess_player player)
 {
@@ -122,13 +123,13 @@ void board_initialize(struct chess_board *board)
 
 int *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
 {
-    struct dyanmic_array moves;
-    
     int x, y;
     if (not from_id(id, &x, &y))
         return NULL;
 
-    return moves.values;
+    struct dynamic_array *moves;
+
+    return as_uint(moves);
 }
 
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
