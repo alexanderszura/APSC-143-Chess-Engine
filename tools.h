@@ -29,6 +29,8 @@ struct chess_board
 {
     enum chess_player next_move_player;
 
+    // int move_count;      // Counter for move - For the 50-move rule
+
     bool piece_present[BOARD_SIZE];
 
     enum chess_player piece_color[BOARD_SIZE];
