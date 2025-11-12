@@ -1,6 +1,7 @@
 #include "board.h"
 #include "tools.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 const char *player_string(enum chess_player player)
 {
@@ -102,7 +103,6 @@ void board_initialize(struct chess_board *board)
     /* --------------- Setup Pawns --------------- */
 
     /* --------------- Bottom Rank --------------- */
-
     enum chess_piece bottom_rank[] = {PIECE_ROOK, PIECE_KNIGHT, PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK};
 
     white_cord = from_cords(0, 0);
@@ -118,8 +118,186 @@ void board_initialize(struct chess_board *board)
         board->piece_present[white_cord++] = true;
         board->piece_present[black_cord++] = true;
     }
-
     /* --------------- Bottom Rank --------------- */
+}
+
+bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int y, enum chess_player color)
+{
+    if (x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE)
+        return false;
+
+    int id = from_cords(x, y);
+
+    if (board.piece_present[id] and board.piece_color[id] == color)
+        return false;
+
+    // printf("Legal Move at (%d, %d) with id: %d\n", x, y, id);
+
+    append_dynamic(moves, id);
+
+    return true;
+};
+
+unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+{
+    int x, y;
+    if (not from_id(id, &x, &y))
+        return NULL;
+
+    struct dynamic_array *moves = init_dynamic();
+    if (moves == NULL)
+        return NULL;
+
+    int i;
+
+    enum chess_player player = board.piece_color[id];
+
+    switch (piece)
+    {
+    case PIECE_PAWN:
+        int dir = board.next_move_player == PLAYER_WHITE ? 1 : -1;
+
+        if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
+            add_move(moves, board, x, y + dir, player);
+        
+        if (x > 0 and board.piece_present[from_cords(x - 1, y + dir)]) // Capturing Left side
+            add_move(moves, board, x - 1, y + dir, player);
+
+        if (x < GRID_SIZE - 1 and board.piece_present[from_cords(x + 1, y + dir)]) // Capturing Right side
+            add_move(moves, board, x + 1, y + dir, player);
+
+        // TODO: Add en passant
+        break;
+
+    case PIECE_KNIGHT:
+        add_move(moves, board, x + 1, y + 2, player);
+        add_move(moves, board, x - 1, y + 2, player);
+        add_move(moves, board, x + 1, y - 2, player);
+        add_move(moves, board, x - 1, y - 2, player);
+
+        add_move(moves, board, x + 2, y + 1, player);
+        add_move(moves, board, x - 2, y + 1, player);
+        add_move(moves, board, x + 2, y - 1, player);
+        add_move(moves, board, x - 2, y - 1, player);
+        break;
+
+    case PIECE_BISHOP:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y - i)]);
+
+        break;
+
+    case PIECE_ROOK:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y - i)]);
+
+        break;
+    case PIECE_QUEEN:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y - i)]);
+
+        break;
+    case PIECE_KING:
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 and dy == 0) continue;
+
+                add_move(moves, board, x + dx, y + dy, player);
+            }
+        }
+
+        break;
+    }
+    
+
+    return (unsigned int *)(moves->values);
 }
 
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
