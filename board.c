@@ -129,18 +129,27 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
 
 void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
-    // TODO: apply a completed move to the board.
+    int from_index = move->from_square;
+    int to_index = move->to_square;
+
+    // move
+    board->piece_id[to_index] = move->piece_id;
+    board->piece_color[to_index] = board->piece_color[from_index];
+    board->piece_present[to_index] = true;
+    board->piece_present[from_index] = false;
+
+    // promotion 
+    if (move->promotes_to_id != -1) {
+        board->piece_id[to_index] = move->promotes_to_id;
+    }
+
+    // TODO: handle castling
+
+
 
     // The final step is to update the the turn of players in the board state.
-    switch (board->next_move_player)
-    {
-    case PLAYER_WHITE:
-        board->next_move_player = PLAYER_BLACK;
-        break;
-    case PLAYER_BLACK:
-        board->next_move_player = PLAYER_WHITE;
-        break;
-    }
+    board->next_move_player = (board->next_move_player == PLAYER_WHITE) ? PLAYER_BLACK : PLAYER_WHITE;
+
 }
 
 void board_summarize(const struct chess_board *board)
