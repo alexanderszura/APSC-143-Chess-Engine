@@ -14,8 +14,6 @@ int main()
 
     display_board(board);
 
-    generate_legal_moves(PIECE_QUEEN, board, from_cords(3, 3));
-
     struct chess_move move;
     while (parse_move(&move))
     {

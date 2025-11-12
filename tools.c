@@ -78,16 +78,15 @@ unsigned long hash(unsigned char *str)
     return hash;
 }
 
-bool init_dynamic(struct dynamic_array *arr)
+struct dynamic_array *init_dynamic()
 {
-    arr = malloc(sizeof(struct dynamic_array));
+    struct dynamic_array *arr = malloc(sizeof(struct dynamic_array));
     if (arr == NULL)
-        return false;
-
+        return NULL;
+    
     arr->values = NULL;
     arr->current_index = 0;
-
-    return true;
+    return arr;
 }
 
 bool append_dynamic(struct dynamic_array *arr, unsigned long value)
@@ -97,7 +96,7 @@ bool append_dynamic(struct dynamic_array *arr, unsigned long value)
 
     if (arr->values == NULL)
     {
-        arr->values = malloc(sizeof(value));
+        arr->values = malloc(sizeof(unsigned long));
         arr->current_index = 0;
 
         if (arr->values == NULL) 
@@ -106,7 +105,7 @@ bool append_dynamic(struct dynamic_array *arr, unsigned long value)
             return false;
         }
     } else {
-        unsigned long *temp = realloc(arr->values, (arr->current_index + 1) * sizeof(value));
+        unsigned long *temp = realloc(arr->values, (arr->current_index + 1) * sizeof(unsigned long));
 
         if (temp == NULL) 
         {

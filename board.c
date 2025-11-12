@@ -131,7 +131,7 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
     if (board.piece_present[id] and board.piece_color[id] == color)
         return false;
 
-    printf("Legal Move at (%d, %d) with id: %d\n", x, y, id);
+    // printf("Legal Move at (%d, %d) with id: %d\n", x, y, id);
 
     append_dynamic(moves, id);
 
@@ -144,8 +144,9 @@ unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board bo
     if (not from_id(id, &x, &y))
         return NULL;
 
-    struct dynamic_array *moves;
-    init_dynamic(moves);
+    struct dynamic_array *moves = init_dynamic();
+    if (moves == NULL)
+        return NULL;
 
     int i;
 
