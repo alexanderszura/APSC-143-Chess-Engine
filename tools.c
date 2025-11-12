@@ -43,7 +43,7 @@ int from_code(char *code)
         i++;
     }
 
-    return 0;
+    return -1;
 }
 
 void display_board(struct chess_board board)
@@ -128,6 +128,13 @@ bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
             return true;
 
     return false;
+}
+
+void free_dynamic(struct dynamic_array *arr)
+{
+    free(arr->values);
+    free(arr);
+    arr->current_index = 0;
 }
 
 void parse_error(char c) {
