@@ -185,7 +185,7 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castling)
 {
     int x, y;
     if (not from_id(id, &x, &y))
@@ -234,60 +234,60 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
 
     case PIECE_BISHOP:
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y + i, player)) break;
         } while (not board.piece_present[from_cords(x + i, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x - i, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x - i, y + i, player)) break;
         } while (not board.piece_present[from_cords(x - i, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x - i, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x - i, y - i, player)) break;
         } while (not board.piece_present[from_cords(x - i, y - i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y - i, player)) break;
         } while (not board.piece_present[from_cords(x + i, y - i)]);
 
         break;
 
     case PIECE_ROOK:
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y, player)) break;
         } while (not board.piece_present[from_cords(x + i, y)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x - i, y, player)) break;
             i++;
+            if (not add_move(moves, board, x - i, y, player)) break;
         } while (not board.piece_present[from_cords(x - i, y)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x, y + i, player)) break;
         } while (not board.piece_present[from_cords(x, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x, y - i, player)) break;
         } while (not board.piece_present[from_cords(x, y - i)]);
 
         bool castle_left, castle_right;
 
-        if (check_for_castle(board, &castle_left, &castle_right))
+        if (include_castling and check_for_castle(board, &castle_left, &castle_right))
         {
             int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
 
@@ -300,52 +300,52 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         break;
     case PIECE_QUEEN:
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y + i, player)) break;
         } while (not board.piece_present[from_cords(x + i, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x - i, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x - i, y + i, player)) break;
         } while (not board.piece_present[from_cords(x - i, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x - i, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x - i, y - i, player)) break;
         } while (not board.piece_present[from_cords(x - i, y - i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y - i, player)) break;
         } while (not board.piece_present[from_cords(x + i, y - i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x + i, y, player)) break;
             i++;
+            if (not add_move(moves, board, x + i, y, player)) break;
         } while (not board.piece_present[from_cords(x + i, y)]);
 
-        i = 1;
-        do {
-            if (not add_move(moves, board, x - i, y, player)) break;
+        i = 0;
+        do {     
             i++;
+            if (not add_move(moves, board, x - i, y, player)) break;
         } while (not board.piece_present[from_cords(x - i, y)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x, y + i, player)) break;
             i++;
+            if (not add_move(moves, board, x, y + i, player)) break;
         } while (not board.piece_present[from_cords(x, y + i)]);
 
-        i = 1;
+        i = 0;
         do {
-            if (not add_move(moves, board, x, y - i, player)) break;
             i++;
+            if (not add_move(moves, board, x, y - i, player)) break;
         } while (not board.piece_present[from_cords(x, y - i)]);
 
         break;
@@ -360,7 +360,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         bool left_castle, right_castle;
 
-        if (check_for_castle(board, &left_castle, &right_castle))
+        if (include_castling and check_for_castle(board, &left_castle, &right_castle))
         {
             int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
 
@@ -412,7 +412,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         if (board->piece_color[i] != color) continue;
         if (board->piece_id[i] != move->piece_id) continue;
 
-        legal = generate_legal_moves(move->piece_id, *board, i);
+        legal = generate_legal_moves(move->piece_id, *board, i, true);
         if (!legal) continue;
 
         for (int j = 0; j < legal->current_index; j++) {
@@ -489,19 +489,21 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
 
 bool player_in_check(const struct chess_board *board, int id_to_check)
 {
-    struct dynamic_array *attacking_squares = init_dynamic();
+    struct dynamic_array *attacking_squares;
 
     enum chess_player player_color = board->piece_color[id_to_check];
 
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
-            attacking_squares = init_dynamic();
-
-            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i);
-            for (int i = 0; i < attacking_squares->current_index; i++) 
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false);
+            
+            if (attacking_squares == NULL)
+                continue;
+            
+            for (int j = 0; j < attacking_squares->current_index; j++) 
             {
-                if (attacking_squares->values[i] == id_to_check) 
+                if (attacking_squares->values[j] == id_to_check)
                 {
                     free_dynamic(attacking_squares);
                     return true;

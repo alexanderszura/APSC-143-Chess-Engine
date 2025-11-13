@@ -75,7 +75,7 @@ unsigned long hash(unsigned char *str);
 struct dynamic_array *init_dynamic();
 bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
-void free_dynamic();
+void free_dynamic(struct dynamic_array *arr);
 void print_dynamic(struct dynamic_array *arr);
 
 void parse_error(char c);
