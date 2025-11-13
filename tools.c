@@ -63,8 +63,6 @@ void display_board(struct chess_board board)
     }
 }
 
-<<<<<<< HEAD
-=======
 /**
  * York University djb2 algorithm
  * http://www.cse.yorku.ca/~oz/hash.html
@@ -139,7 +137,6 @@ void free_dynamic(struct dynamic_array *arr)
     arr->current_index = 0;
 }
 
->>>>>>> AS-Moves
 void parse_error(char c) {
     panicf("parse error at character '%c'\n", c);
 }
