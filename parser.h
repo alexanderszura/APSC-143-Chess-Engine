@@ -10,5 +10,6 @@
 // unspecified.
 
 bool parse_move(struct chess_move *move);
+void test_parser();
 
 #endif

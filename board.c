@@ -3,6 +3,9 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+#define MAX_DEPTH 3 // TODO: Increase
+#define KING_X_LOCATION 4
+
 const char *player_string(enum chess_player player)
 {
     switch (player)
@@ -138,7 +141,52 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
     return true;
 };
 
-unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_right)
+{
+    if (not board.white_can_castle and board.next_move_player == PLAYER_WHITE)
+        return false;
+
+    if (not board.black_can_castle and board.next_move_player == PLAYER_BLACK)
+        return false;
+
+    int y = board.next_move_player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+    if (player_in_check(&board, from_cords(KING_X_LOCATION, y)))
+        return false;
+
+    int rook_id = from_cords(0, y);
+
+    if (castle_left != NULL)
+        *castle_left = true;
+
+    if (board.piece_present[rook_id] and board.piece_id[rook_id] == PIECE_ROOK)
+        for (int x = 1; x < KING_X_LOCATION; x++)
+            if (board.piece_present[from_cords(x, y)]) 
+            {
+                if (castle_left != NULL)
+                    *castle_left = false;
+                break;
+            }
+
+    rook_id = from_cords(GRID_SIZE - 1, y);
+
+    if (castle_right != NULL)
+        *castle_right = true;
+
+    if (board.piece_present[rook_id] and board.piece_id[rook_id] == PIECE_ROOK)
+        for (int x = KING_X_LOCATION + 1; x < GRID_SIZE; x++)
+            if (board.piece_present[from_cords(x, y)]) 
+            {
+                if (castle_right != NULL)
+                    *castle_right = false;
+
+                break;
+            }
+    
+    return *castle_left or *castle_right;
+}
+
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
 {
     int x, y;
     if (not from_id(id, &x, &y))
@@ -155,7 +203,7 @@ unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board bo
     switch (piece)
     {
     case PIECE_PAWN:
-        int dir = board.next_move_player == PLAYER_WHITE ? 1 : -1;
+        int dir = player == PLAYER_WHITE ? 1 : -1;
 
         if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
             add_move(moves, board, x, y + dir, player);
@@ -233,6 +281,19 @@ unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board bo
             i++;
         } while (not board.piece_present[from_cords(x, y - i)]);
 
+        bool castle_left, castle_right;
+
+        if (check_for_castle(board, &castle_left, &castle_right))
+        {
+            int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+            if (castle_left)
+                add_move(moves, board, KING_X_LOCATION + 1, y, player);
+
+            if (castle_right)
+                add_move(moves, board, KING_X_LOCATION - 1, y, player);
+        }
+
         break;
     case PIECE_QUEEN:
         i = 1;
@@ -293,35 +354,173 @@ unsigned int *generate_legal_moves(enum chess_piece piece, struct chess_board bo
             }
         }
 
+        bool left_castle, right_castle;
+
+        if (check_for_castle(board, &left_castle, &right_castle))
+        {
+            int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+            if (left_castle)
+                add_move(moves, board, x - 2, y, player);
+            if (right_castle)
+                add_move(moves, board, x + 2, y, player);
+        }
+
         break;
     }
     
 
-    return (unsigned int *)(moves->values);
+    return moves;
 }
 
+static void move_piece(struct chess_board *board, int from, int to) {
+    board->piece_id[to] = board->piece_id[from];
+    board->piece_color[to] = board->piece_color[from];
+    board->piece_present[to] = true;
+    board->piece_present[from] = false;
+}
+
+// fill in missing info in a parsed board state, report move completion error if cant be determined 
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
 {
-    // TODO: complete the move.
+    enum chess_player color = board->next_move_player; 
+    int to_id = move->to_square;
+
+    // castling
+    if (move->piece_id == PIECE_KING) {
+        int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
+        int king_home = from_cords(KING_X_LOCATION, home_y);
+
+        if ((to_id == from_cords(6, home_y) or to_id == from_cords(2, home_y)) and
+            board->piece_id[king_home] == PIECE_KING and
+            board->piece_color[king_home] == color) {
+            move->from_square = king_home;
+            return;
+        }
+    }
+
+    int candidate = -1;
+    int candidate_count = 0; 
+
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        if (!board->piece_present[i]) continue;
+        if (board->piece_color[i] != color) continue;
+        if (board->piece_id[i] != move->piece_id) continue;
+
+        struct dynamic_array *legal = generate_legal_moves(move->piece_id, *board, i);
+        if (!legal) continue;
+
+        for (int j = 0; j < legal->current_index; j++) {
+            if (legal->values[j] == to_id) {
+                candidate = i;
+                candidate_count++;
+                break;
+            }
+        }
+        free_dynamic(legal);
+    }
+
+    if (candidate_count == 1) {
+        move->from_square = candidate;
+    } else {
+        printf("move completion error: %s %s to %s\n",
+        color_string(color),
+        piece_string(move->piece_id),
+        square_string(to_id));
+    }
 }
 
 void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
-    // TODO: apply a completed move to the board.
+    int from_id = move->from_square;
+    int to_id   = move->to_square;
+    
+    enum chess_piece piece = move->piece_id;
+    enum chess_player color = board->piece_color[from_id];
 
-    // The final step is to update the the turn of players in the board state.
-    switch (board->next_move_player)
-    {
-    case PLAYER_WHITE:
-        board->next_move_player = PLAYER_BLACK;
-        break;
-    case PLAYER_BLACK:
-        board->next_move_player = PLAYER_WHITE;
-        break;
+    move_piece(board, from_id, to_id);
+
+    // promotion 
+    if (move->promotes_to_id != -1) {
+        board->piece_id[to_id] = move->promotes_to_id;
     }
+
+    // castling
+    if (piece == PIECE_KING) {
+        bool castle_left = false, castle_right = false;
+
+        check_for_castle(*board, &castle_left, &castle_right);
+
+        int home_y = (color == PLAYER_WHITE) ? 0 : GRID_SIZE - 1;
+
+        // king-side castle
+        if (castle_right and to_id == from_cords(6, home_y)) {
+            move_piece(board, from_cords(7, home_y), from_cords(5, home_y));
+            if (color == PLAYER_WHITE) board->white_can_castle = false;
+            else board->black_can_castle = false;
+        }
+
+        // queen-side castle
+        if (castle_left and to_id == from_cords(2, home_y)) {
+            move_piece(board, from_cords(0, home_y), from_cords(3, home_y));
+            if (color == PLAYER_WHITE) board->white_can_castle = false;
+            else board->black_can_castle = false;
+        }
+
+        if (color == PLAYER_WHITE) board->white_can_castle = false;
+        else board->black_can_castle = false;
+    }
+
+    if (piece == PIECE_ROOK) {
+        if (color == PLAYER_WHITE and (from_id == from_cords(0,0) or from_id == from_cords(7,0)))
+            board->white_can_castle = false;
+        if (color == PLAYER_BLACK and (from_id == from_cords(0, GRID_SIZE-1) or from_id == from_cords(7, GRID_SIZE-1)))
+            board->black_can_castle = false;
+    }
+
+    // switch player
+    board->next_move_player = (color == PLAYER_WHITE) ? PLAYER_BLACK : PLAYER_WHITE;
 }
 
+
+
+bool player_in_check(const struct chess_board *board, int id_to_check)
+{
+    struct dynamic_array *attacking_squares = init_dynamic();
+
+    enum chess_player player_color = board->piece_color[id_to_check];
+
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        if (board->piece_present[i] and board->piece_color[i] != player_color)
+        {
+            attacking_squares = init_dynamic();
+
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i);
+            for (int i = 0; i < attacking_squares->current_index; i++) 
+            {
+                if (attacking_squares->values[i] == id_to_check) 
+                {
+                    free_dynamic(attacking_squares);
+                    return true;
+                }
+            }
+
+            free_dynamic(attacking_squares);
+        }
+    }
+
+    return false;
+}
+
+// Classify the state of the board, printing one of the following:
+// - game incomplete
+// - white wins by checkmate
+// - black wins by checkmate
+// - draw by stalemate
 void board_summarize(const struct chess_board *board)
 {
-    // TODO: print the state of the game.
+    for (int depth = 0; depth < MAX_DEPTH; depth++) 
+    {
+
+    }
 }
