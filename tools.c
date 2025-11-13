@@ -148,9 +148,26 @@ bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
 
 void free_dynamic(struct dynamic_array *arr)
 {
-    free(arr->values);
+    if (arr == NULL)
+        return;
+    
+    if (arr->values != NULL)
+        free(arr->values);
+    
     free(arr);
-    arr->current_index = 0;
+}
+
+void print_dynamic(struct dynamic_array *arr)
+{
+    if (arr->values == NULL) return;
+
+    printf("(%d", arr->values[0]);
+
+    for (unsigned int i = 1; i < arr->current_index; i++)
+    {
+        printf(", %d", arr->values[i]);
+    }
+    printf(")\n");
 }
 
 void print_dynamic(struct dynamic_array *arr)
