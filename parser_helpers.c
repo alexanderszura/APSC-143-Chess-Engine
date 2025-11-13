@@ -102,8 +102,9 @@ void reset_fields(struct chess_move *move) {
     move->is_capture = false;
     move->is_castle = false;
     move->is_long_castle = false;
-    move->promotes_to_id = -1;
+    move->promotes_to_id = PIECE_UNKNOWN;
     move->from_square = -1;
     move->to_square = -1;
+    move->piece_id = PIECE_UNKNOWN;
 }
 

@@ -4,9 +4,6 @@
 #ifndef APSC143__BOARD_H
 #define APSC143__BOARD_H
 
-// Gets a lowercase string denoting the player.
-const char *player_string(enum chess_player player);
-
 char player_char(enum chess_player player);
 
 // Gets a lowercase string denoting the piece type.

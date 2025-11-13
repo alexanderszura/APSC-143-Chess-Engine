@@ -46,6 +46,22 @@ int from_code(char *code)
     return -1;
 }
 
+char *square_string(int id)
+{
+    int x, y;
+    from_id(id, &x, &y);
+
+    char letter = 'a' + x;
+    char num = '1' + y;
+
+    char *str = malloc(3 * sizeof(char));
+    str[0] = letter;
+    str[1] = num;
+    str[2] = '\0';
+
+    return str;
+}
+
 void display_board(struct chess_board board)
 {
     for (int y = GRID_SIZE - 1; y >= 0; y--)
@@ -137,6 +153,32 @@ void free_dynamic(struct dynamic_array *arr)
     arr->current_index = 0;
 }
 
+void print_dynamic(struct dynamic_array *arr)
+{
+    if (arr->values == NULL) return;
+
+    printf("(%d", arr->values[0]);
+
+    for (unsigned int i = 1; i < arr->current_index; i++)
+    {
+        printf(", %d", arr->values[i]);
+    }
+    printf(")\n");
+}
+
 void parse_error(char c) {
     panicf("parse error at character '%c'\n", c);
+}
+
+void print_move(struct chess_move move)
+{
+    printf("from_square: %d, to_square: %d, piece_id: %d, is_capture: %d, is_castle: %d, is_long_castle: %d, promotes_to: %d",
+        move.from_square,
+        move.to_square,
+        move.piece_id,
+        move.is_capture,
+        move.is_castle,
+        move.is_long_castle,
+        move.promotes_to_id
+    );
 }

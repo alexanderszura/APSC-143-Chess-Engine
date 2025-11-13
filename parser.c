@@ -34,11 +34,7 @@ bool parse_move(struct chess_move *move)
             default: parse_error(c);
         }
 
-        // check for capture
-        if (parse_capture()) {
-            move->is_capture = true;
-            getc(stdin);
-        }
+        move->is_capture = parse_capture();
 
         move->to_square = parse_square();
         move->promotes_to_id = parse_promotion();
@@ -49,7 +45,9 @@ bool parse_move(struct chess_move *move)
     // pawn parsing 
     if (is_file(c)) {
         ungetc(c, stdin);
-        move->piece_id = PIECE_PAWN;
+        
+        if (move->piece_id == PIECE_UNKNOWN)
+            move->piece_id = PIECE_PAWN;
 
         char start_file = getc(stdin);
         if (parse_capture()) {
@@ -76,7 +74,7 @@ void test_parser() {
 
     printf("Enter a move: ");
     
-    if (parse_move(&move, &board)) {
+    if (parse_move(&move)) {
         printf("Parsed: piece=%d, to=%d, capture=%s\n", 
                move.piece_id, move.to_square, move.is_capture ? "yes" : "no");
     } else {

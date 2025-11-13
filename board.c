@@ -6,17 +6,6 @@
 #define MAX_DEPTH 3 // TODO: Increase
 #define KING_X_LOCATION 4
 
-const char *player_string(enum chess_player player)
-{
-    switch (player)
-    {
-    case PLAYER_WHITE:
-        return "white";
-    case PLAYER_BLACK:
-        return "black";
-    }
-}
-
 char player_char(enum chess_player player)
 {
     switch (player)
@@ -25,6 +14,8 @@ char player_char(enum chess_player player)
         return 'w';
     case PLAYER_BLACK:
         return 'b';
+    case PLAYER_UNKNOWN:
+        return '?';
     }
 }
 
@@ -63,6 +54,8 @@ char piece_char(enum chess_piece piece)
         return 'q';
     case PIECE_KING:
         return 'k';
+    case PIECE_UNKNOWN:
+        return '?';
     }
 }
 
@@ -74,6 +67,8 @@ const char *color_string(enum chess_player color)
         return "BLACK";
     case PLAYER_WHITE:
         return "WHITE";
+    case PLAYER_UNKNOWN:
+        return "?????";
     default:
         return "UNKNOWN";
     }
@@ -87,7 +82,11 @@ void board_initialize(struct chess_board *board)
     board->black_can_castle = true;
 
     for (int i = 0; i < BOARD_SIZE; i++)
+    {
         board->piece_present[i] = false;
+        board->piece_color[i] = PLAYER_UNKNOWN;
+        board->piece_id[i] = PIECE_UNKNOWN;
+    }
 
     /* --------------- Setup Pawns --------------- */
     int white_cord = from_cords(0, 1);
@@ -205,8 +204,13 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
     case PIECE_PAWN:
         int dir = player == PLAYER_WHITE ? 1 : -1;
 
+        int pawn_spawn = player == PLAYER_WHITE ? 1 : GRID_SIZE - 2;
+
         if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
             add_move(moves, board, x, y + dir, player);
+
+        if (y == pawn_spawn and not board.piece_present[from_cords(x, y + 2 * dir)]) // Two moves off spawn
+            add_move(moves, board, x, y + 2 * dir, player);
         
         if (x > 0 and board.piece_present[from_cords(x - 1, y + dir)]) // Capturing Left side
             add_move(moves, board, x - 1, y + dir, player);
@@ -400,27 +404,28 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
     }
 
     int candidate = -1;
-    int candidate_count = 0; 
+
+    struct dynamic_array *legal;
 
     for (int i = 0; i < BOARD_SIZE; i++) {
-        if (!board->piece_present[i]) continue;
+        if (not board->piece_present[i]) continue;
         if (board->piece_color[i] != color) continue;
         if (board->piece_id[i] != move->piece_id) continue;
 
-        struct dynamic_array *legal = generate_legal_moves(move->piece_id, *board, i);
+        legal = generate_legal_moves(move->piece_id, *board, i);
         if (!legal) continue;
 
         for (int j = 0; j < legal->current_index; j++) {
             if (legal->values[j] == to_id) {
                 candidate = i;
-                candidate_count++;
                 break;
             }
         }
-        free_dynamic(legal);
     }
+    
+    free_dynamic(legal);
 
-    if (candidate_count == 1) {
+    if (candidate != -1) {
         move->from_square = candidate;
     } else {
         printf("move completion error: %s %s to %s\n",
