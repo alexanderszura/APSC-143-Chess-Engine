@@ -4,7 +4,7 @@
 #include "panic.h"
 
 
-bool parse_move(struct chess_move *move, struct chess_board *board)
+bool parse_move(struct chess_move *move)
 {
     reset_fields(move);
     skip_spaces();
@@ -68,6 +68,7 @@ bool parse_move(struct chess_move *move, struct chess_board *board)
 
     }
 
+<<<<<<< HEAD
 void test_parser() {
     struct chess_board board;
     board_initialize(&board);
@@ -80,6 +81,18 @@ void test_parser() {
                move.piece_id, move.to_square, move.is_capture ? "yes" : "no");
     } else {
         printf("Parse failed\n");
+=======
+// testing block
+void test_parser() {
+    struct chess_move move;
+    
+    // Test inputs: "Ne4", "exd5", "O-O"
+    printf("Running parser tests...\n");
+    
+    if (parse_move(&move)) {
+        printf("Move parsed: piece=%d, to=%d, capture=%d\n", 
+               move.piece_id, move.to_square, move.is_capture);
+>>>>>>> AS-Moves
     }
 }
 

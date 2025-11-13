@@ -2,11 +2,11 @@
 #include "parser.h"
 #include "tools.h"
 
-
+// void test_parser();
 
 int main()
 {
-    test_parser();
+    // test_parser();
     
     // Then run the normal chess game
     struct chess_board board;

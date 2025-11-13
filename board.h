@@ -36,4 +36,9 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move);
 // - draw by stalemate
 void board_summarize(const struct chess_board *board);
 
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id);
+
+bool player_in_check(const struct chess_board *board, int id_to_check);
+bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_right);
+
 #endif

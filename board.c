@@ -1,6 +1,10 @@
 #include "board.h"
 #include "tools.h"
 #include "stdio.h"
+#include "stdlib.h"
+
+#define MAX_DEPTH 3 // TODO: Increase
+#define KING_X_LOCATION 4
 
 const char *player_string(enum chess_player player)
 {
@@ -102,7 +106,6 @@ void board_initialize(struct chess_board *board)
     /* --------------- Setup Pawns --------------- */
 
     /* --------------- Bottom Rank --------------- */
-
     enum chess_piece bottom_rank[] = {PIECE_ROOK, PIECE_KNIGHT, PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK};
 
     white_cord = from_cords(0, 0);
@@ -118,8 +121,256 @@ void board_initialize(struct chess_board *board)
         board->piece_present[white_cord++] = true;
         board->piece_present[black_cord++] = true;
     }
-
     /* --------------- Bottom Rank --------------- */
+}
+
+bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int y, enum chess_player color)
+{
+    if (x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE)
+        return false;
+
+    int id = from_cords(x, y);
+
+    if (board.piece_present[id] and board.piece_color[id] == color)
+        return false;
+
+    // printf("Legal Move at (%d, %d) with id: %d\n", x, y, id);
+
+    append_dynamic(moves, id);
+
+    return true;
+};
+
+bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_right)
+{
+    if (not board.white_can_castle and board.next_move_player == PLAYER_WHITE)
+        return false;
+
+    if (not board.black_can_castle and board.next_move_player == PLAYER_BLACK)
+        return false;
+
+    int y = board.next_move_player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+    if (player_in_check(&board, from_cords(KING_X_LOCATION, y)))
+        return false;
+
+    int rook_id = from_cords(0, y);
+
+    if (castle_left != NULL)
+        *castle_left = true;
+
+    if (board.piece_present[rook_id] and board.piece_id[rook_id] == PIECE_ROOK)
+        for (int x = 1; x < KING_X_LOCATION; x++)
+            if (board.piece_present[from_cords(x, y)]) 
+            {
+                if (castle_left != NULL)
+                    *castle_left = false;
+                break;
+            }
+
+    rook_id = from_cords(GRID_SIZE - 1, y);
+
+    if (castle_right != NULL)
+        *castle_right = true;
+
+    if (board.piece_present[rook_id] and board.piece_id[rook_id] == PIECE_ROOK)
+        for (int x = KING_X_LOCATION + 1; x < GRID_SIZE; x++)
+            if (board.piece_present[from_cords(x, y)]) 
+            {
+                if (castle_right != NULL)
+                    *castle_right = false;
+
+                break;
+            }
+    
+    return *castle_left or *castle_right;
+}
+
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+{
+    int x, y;
+    if (not from_id(id, &x, &y))
+        return NULL;
+
+    struct dynamic_array *moves = init_dynamic();
+    if (moves == NULL)
+        return NULL;
+
+    int i;
+
+    enum chess_player player = board.piece_color[id];
+
+    switch (piece)
+    {
+    case PIECE_PAWN:
+        int dir = player == PLAYER_WHITE ? 1 : -1;
+
+        if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
+            add_move(moves, board, x, y + dir, player);
+        
+        if (x > 0 and board.piece_present[from_cords(x - 1, y + dir)]) // Capturing Left side
+            add_move(moves, board, x - 1, y + dir, player);
+
+        if (x < GRID_SIZE - 1 and board.piece_present[from_cords(x + 1, y + dir)]) // Capturing Right side
+            add_move(moves, board, x + 1, y + dir, player);
+
+        // TODO: Add en passant
+        break;
+
+    case PIECE_KNIGHT:
+        add_move(moves, board, x + 1, y + 2, player);
+        add_move(moves, board, x - 1, y + 2, player);
+        add_move(moves, board, x + 1, y - 2, player);
+        add_move(moves, board, x - 1, y - 2, player);
+
+        add_move(moves, board, x + 2, y + 1, player);
+        add_move(moves, board, x - 2, y + 1, player);
+        add_move(moves, board, x + 2, y - 1, player);
+        add_move(moves, board, x - 2, y - 1, player);
+        break;
+
+    case PIECE_BISHOP:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y - i)]);
+
+        break;
+
+    case PIECE_ROOK:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y - i)]);
+
+        bool castle_left, castle_right;
+
+        if (check_for_castle(board, &castle_left, &castle_right))
+        {
+            int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+            if (castle_left)
+                add_move(moves, board, KING_X_LOCATION + 1, y, player);
+
+            if (castle_right)
+                add_move(moves, board, KING_X_LOCATION - 1, y, player);
+        }
+
+        break;
+    case PIECE_QUEEN:
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y - i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x + i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x + i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x - i, y, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x - i, y)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y + i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y + i)]);
+
+        i = 1;
+        do {
+            if (not add_move(moves, board, x, y - i, player)) break;
+            i++;
+        } while (not board.piece_present[from_cords(x, y - i)]);
+
+        break;
+    case PIECE_KING:
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 and dy == 0) continue;
+
+                add_move(moves, board, x + dx, y + dy, player);
+            }
+        }
+
+        bool left_castle, right_castle;
+
+        if (check_for_castle(board, &left_castle, &right_castle))
+        {
+            int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
+
+            if (left_castle)
+                add_move(moves, board, x - 2, y, player);
+            if (right_castle)
+                add_move(moves, board, x + 2, y, player);
+        }
+
+        break;
+    }
+    
+
+    return moves;
 }
 
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
@@ -146,13 +397,56 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
     // TODO: handle castling
 
 
-
+    
     // The final step is to update the the turn of players in the board state.
-    board->next_move_player = (board->next_move_player == PLAYER_WHITE) ? PLAYER_BLACK : PLAYER_WHITE;
-
+    switch (board->next_move_player)
+    {
+    case PLAYER_WHITE:
+        board->next_move_player = PLAYER_BLACK;
+        break;
+    case PLAYER_BLACK:
+        board->next_move_player = PLAYER_WHITE;
+        break;
+    }
 }
 
+bool player_in_check(const struct chess_board *board, int id_to_check)
+{
+    struct dynamic_array *attacking_squares = init_dynamic();
+
+    enum chess_player player_color = board->piece_color[id_to_check];
+
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        if (board->piece_present[i] and board->piece_color[i] != player_color)
+        {
+            attacking_squares = init_dynamic();
+
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i);
+            for (int i = 0; i < attacking_squares->current_index; i++) 
+            {
+                if (attacking_squares->values[i] == id_to_check) 
+                {
+                    free_dynamic(attacking_squares);
+                    return true;
+                }
+            }
+
+            free_dynamic(attacking_squares);
+        }
+    }
+
+    return false;
+}
+
+// Classify the state of the board, printing one of the following:
+// - game incomplete
+// - white wins by checkmate
+// - black wins by checkmate
+// - draw by stalemate
 void board_summarize(const struct chess_board *board)
 {
-    // TODO: print the state of the game.
+    for (int depth = 0; depth < MAX_DEPTH; depth++) 
+    {
+
+    }
 }

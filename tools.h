@@ -5,6 +5,10 @@
 
 #define or ||
 #define and &&
+<<<<<<< HEAD
+=======
+#define not !
+>>>>>>> AS-Moves
 #define elif else if
 
 #define GRID_SIZE 8
@@ -54,12 +58,27 @@ struct chess_move
     bool is_long_castle; // True if the move is a long castle
 };
 
+struct dynamic_array 
+{
+    unsigned long *values;
+    unsigned int current_index;
+};
+
 int from_cords(int x, int y);
 bool from_id(int id, int *x, int *y);
 int from_code(char *code);
 
 void display_board(struct chess_board board);
 
+<<<<<<< HEAD
+=======
+unsigned long hash(unsigned char *str);
+struct dynamic_array *init_dynamic();
+bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
+bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
+void free_dynamic();
+
+>>>>>>> AS-Moves
 void parse_error(char c);
 
 #endif

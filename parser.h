@@ -9,7 +9,7 @@
 // is reached, returns false; the contents of *move in such a case are
 // unspecified.
 
-bool parse_move(struct chess_move *move, struct chess_board *board);
+bool parse_move(struct chess_move *move);
 void test_parser();
 
 #endif
