@@ -46,38 +46,40 @@ bool parse_move(struct chess_move *move)
         return true;
     }
 
-        // pawn parsing 
-        if (is_file(c)) {
-            ungetc(c, stdin);
-            move->piece_id = PIECE_PAWN;
+    // pawn parsing 
+    if (is_file(c)) {
+        ungetc(c, stdin);
+        move->piece_id = PIECE_PAWN;
 
-            char start_file = getc(stdin);
-            if (parse_capture()) {
-                move->is_capture = true;
-                getc(stdin);
-            } else {
-                ungetc(start_file, stdin);
-            }
-                move->to_square = parse_square();
-                move->promotes_to_id = parse_promotion();
-    
-                return true;
+        char start_file = getc(stdin);
+        if (parse_capture()) {
+            move->is_capture = true;
+            getc(stdin);
+        } else {
+            ungetc(start_file, stdin);
         }
-        parse_error(c);
-        return false;
+        
+        move->to_square = parse_square();
+        move->promotes_to_id = parse_promotion();
 
+        return true;
     }
-
-// testing block
-void test_parser() {
-    struct chess_move move;
     
-    // Test inputs: "Ne4", "exd5", "O-O"
-    printf("Running parser tests...\n");
-    
-    if (parse_move(&move)) {
-        printf("Move parsed: piece=%d, to=%d, capture=%d\n", 
-               move.piece_id, move.to_square, move.is_capture);
-    }
+    parse_error(c);
+    return false;
 }
 
+void test_parser() {
+    struct chess_board board;
+    board_initialize(&board);
+    struct chess_move move;
+
+    printf("Enter a move: ");
+    
+    if (parse_move(&move, &board)) {
+        printf("Parsed: piece=%d, to=%d, capture=%s\n", 
+               move.piece_id, move.to_square, move.is_capture ? "yes" : "no");
+    } else {
+        printf("Parse failed\n");
+    }
+}
