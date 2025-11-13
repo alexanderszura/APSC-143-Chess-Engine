@@ -15,6 +15,7 @@ enum chess_player
 {
     PLAYER_WHITE,
     PLAYER_BLACK,
+    PLAYER_UNKNOWN = -1,
 };
 
 enum chess_piece
@@ -25,6 +26,7 @@ enum chess_piece
     PIECE_ROOK,
     PIECE_QUEEN,
     PIECE_KING,
+    PIECE_UNKNOWN = -1,
 };
 
 struct chess_board
@@ -64,6 +66,7 @@ struct dynamic_array
 int from_cords(int x, int y);
 bool from_id(int id, int *x, int *y);
 int from_code(char *code);
+char *square_string(int id);
 
 void display_board(struct chess_board board);
 
@@ -73,7 +76,10 @@ struct dynamic_array *init_dynamic();
 bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
 void free_dynamic();
+void print_dynamic(struct dynamic_array *arr);
 
 void parse_error(char c);
+
+void print_move(struct chess_move move);
 
 #endif
