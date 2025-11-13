@@ -170,6 +170,19 @@ void print_dynamic(struct dynamic_array *arr)
     printf(")\n");
 }
 
+void print_dynamic(struct dynamic_array *arr)
+{
+    if (arr->values == NULL) return;
+
+    printf("(%d", arr->values[0]);
+
+    for (unsigned int i = 1; i < arr->current_index; i++)
+    {
+        printf(", %d", arr->values[i]);
+    }
+    printf(")\n");
+}
+
 void parse_error(char c) {
     panicf("parse error at character '%c'\n", c);
 }
