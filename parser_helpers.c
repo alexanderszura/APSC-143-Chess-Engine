@@ -88,13 +88,14 @@ void parse_castle(struct chess_move *move) {
     char c = getc(stdin);
     if (c == '-') {
         expect_char('O');
-        (*move).is_long_castle = true;
+        move->is_long_castle = true;
     } else {
         ungetc(c, stdin);
-        (*move).is_long_castle = false;
+        move->is_long_castle = false;
     }
-    (*move).is_castle = true;
-    (*move).piece_id = PIECE_KING;
+    move->is_castle = true;
+    move->piece_id = PIECE_KING;
+    // to_square will be set in board_complete_move based on current player and castle type
 }
 
 
@@ -106,5 +107,7 @@ void reset_fields(struct chess_move *move) {
     move->from_square = -1;
     move->to_square = -1;
     move->piece_id = PIECE_UNKNOWN;
+    move->from_file = '\0';
+    move->from_rank = '\0';
 }
 

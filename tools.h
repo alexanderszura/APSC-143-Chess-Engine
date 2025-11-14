@@ -55,6 +55,11 @@ struct chess_move
 
     bool is_castle;      // True if the move is a castle
     bool is_long_castle; // True if the move is a long castle
+
+    char from_file; // optional file disambiguation
+    char from_rank; // optional rank disambiguation
+
+
 };
 
 struct dynamic_array 
@@ -66,7 +71,7 @@ struct dynamic_array
 int from_cords(int x, int y);
 bool from_id(int id, int *x, int *y);
 int from_code(char *code);
-char *square_string(int id);
+const char *square_string(int id);
 
 void display_board(struct chess_board board);
 
