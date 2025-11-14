@@ -34,7 +34,11 @@ bool parse_move(struct chess_move *move)
             default: parse_error(c);
         }
 
-        move->is_capture = parse_capture();
+        // check for capture
+        if (parse_capture()) {
+            move->is_capture = true;
+            getc(stdin);
+        }
 
         move->to_square = parse_square();
         move->promotes_to_id = parse_promotion();
@@ -45,14 +49,12 @@ bool parse_move(struct chess_move *move)
     // pawn parsing 
     if (is_file(c)) {
         ungetc(c, stdin);
-        
-        if (move->piece_id == PIECE_UNKNOWN)
-            move->piece_id = PIECE_PAWN;
+        move->piece_id = PIECE_PAWN;
 
         char start_file = getc(stdin);
         if (parse_capture()) {
             move->is_capture = true;
-            getc(stdin);
+            move->from_file = start_file;  
         } else {
             ungetc(start_file, stdin);
         }
