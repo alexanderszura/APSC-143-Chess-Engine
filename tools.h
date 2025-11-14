@@ -83,7 +83,7 @@ bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
 void free_dynamic(struct dynamic_array *arr);
 void print_dynamic(struct dynamic_array *arr);
 
-void parse_error(char c);
+void parse_error(char c, char *debug);
 
 void print_move(struct chess_move move);
 

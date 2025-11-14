@@ -39,7 +39,7 @@ void skip_spaces() {
 void expect_char(char expected) {
     char c = getc(stdin);
     if (c != expected) {
-        parse_error(c);
+        parse_error(c, "expected");
     }
 }
 
@@ -47,8 +47,8 @@ int parse_square() {
     char file = getc(stdin);
     char rank = getc(stdin);
 
-    if (!is_file(file)) parse_error(file);
-    if (!is_rank(rank)) parse_error(rank);
+    if (!is_file(file)) parse_error(file, "square->file");
+    if (!is_rank(rank)) parse_error(rank, "square->rank");
     
     return (rank - '1') * 8 + (file - 'a');
 }
@@ -69,7 +69,7 @@ int parse_promotion() {
         return -1;
     }
     c = getc(stdin);
-    if (!is_piece(c) || c == 'K') parse_error(c); // cannot promote 2 king
+    if (!is_piece(c) || c == 'K') parse_error(c, "pawn-promote"); // cannot promote 2 king
 
     switch(c) {
         case 'Q': return PIECE_QUEEN;
