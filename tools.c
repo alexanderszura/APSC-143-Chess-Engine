@@ -79,6 +79,19 @@ void display_board(struct chess_board board)
     }
 }
 
+void print_dynamic(struct dynamic_array *arr)
+{
+    if (arr->values == NULL) return;
+
+    printf("(%d", arr->values[0]);
+
+    for (unsigned int i = 1; i < arr->current_index; i++)
+    {
+        printf(", %d", arr->values[i]);
+    }
+    printf(")\n");
+}
+
 /**
  * York University djb2 algorithm
  * http://www.cse.yorku.ca/~oz/hash.html
