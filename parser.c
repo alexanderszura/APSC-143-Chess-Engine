@@ -31,14 +31,11 @@ bool parse_move(struct chess_move *move)
             case 'R': move->piece_id = PIECE_ROOK; break;
             case 'Q': move->piece_id = PIECE_QUEEN; break;
             case 'K': move->piece_id = PIECE_KING; break;
-            default: parse_error(c);
+            default: parse_error(c, "Move->Piece");
         }
 
         // check for capture
-        if (parse_capture()) {
-            move->is_capture = true;
-            getc(stdin);
-        }
+        move->is_capture = parse_capture();
 
         move->to_square = parse_square();
         move->promotes_to_id = parse_promotion();
@@ -65,7 +62,7 @@ bool parse_move(struct chess_move *move)
         return true;
     }
     
-    parse_error(c);
+    parse_error(c, "parse move");
     return false;
 }
 
