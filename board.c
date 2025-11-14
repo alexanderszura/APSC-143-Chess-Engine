@@ -15,6 +15,7 @@ char player_char(enum chess_player player)
     case PLAYER_BLACK:
         return 'b';
     case PLAYER_UNKNOWN:
+    default:
         return '?';
     }
 }
@@ -35,6 +36,9 @@ const char *piece_string(enum chess_piece piece)
         return "queen";
     case PIECE_KING:
         return "king";
+    case PIECE_UNKNOWN:
+    default:
+        return "unknown";
     }
 }
 
@@ -55,6 +59,7 @@ char piece_char(enum chess_piece piece)
     case PIECE_KING:
         return 'k';
     case PIECE_UNKNOWN:
+    default:
         return '?';
     }
 }
@@ -76,6 +81,8 @@ const char *color_string(enum chess_player color)
 
 void board_initialize(struct chess_board *board)
 {
+    board->last_check_id = PIECE_UNKNOWN;
+
     board->next_move_player = PLAYER_WHITE;
     
     board->white_can_castle = true;
@@ -142,6 +149,9 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
 
 bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_right)
 {
+    if (castle_left != NULL)  *castle_left = false;
+    if (castle_right != NULL) *castle_right = false;
+
     if (not board.white_can_castle and board.next_move_player == PLAYER_WHITE)
         return false;
 
@@ -185,7 +195,7 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castle)
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castle, bool remove_moves_when_checked)
 {
     int x, y;
     if (not from_id(id, &x, &y))
@@ -207,10 +217,12 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         int pawn_spawn = player == PLAYER_WHITE ? 1 : GRID_SIZE - 2;
 
         if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
+        {
             add_move(moves, board, x, y + dir, player);
 
-        if (y == pawn_spawn and not board.piece_present[from_cords(x, y + 2 * dir)]) // Two moves off spawn
-            add_move(moves, board, x, y + 2 * dir, player);
+            if (y == pawn_spawn and not board.piece_present[from_cords(x, y + 2 * dir)])
+                add_move(moves, board, x, y + 2 * dir, player);
+        }
         
         if (x > 0 and board.piece_present[from_cords(x - 1, y + dir)]) // Capturing Left side
             add_move(moves, board, x - 1, y + dir, player);
@@ -284,24 +296,6 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
             i++;
             if (not add_move(moves, board, x, y - i, player)) break;
         } while (not board.piece_present[from_cords(x, y - i)]);
-
-        if (not include_castle)
-            break;
-
-        bool castle_left, castle_right;
-
-        if (check_for_castle(board, &castle_left, &castle_right))
-        {
-            int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
-
-            if (castle_left)
-                add_move(moves, board, KING_X_LOCATION + 1, y, player);
-
-            if (castle_right)
-                add_move(moves, board, KING_X_LOCATION - 1, y, player);
-        }
-
-        break;
     case PIECE_QUEEN:
         i = 0;
         do {
@@ -379,7 +373,27 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
     }
     
+    if (remove_moves_when_checked and king_in_check(&board, player))
+    {
+        struct chess_board cpy;
+        struct dynamic_array *legal_moves = init_dynamic();
+        struct chess_move move;
 
+        for (int move_index = 0; move_index < moves->current_index; move_index++)
+        {
+            create_board_copy(&board, &cpy);
+
+            create_move(&move, &cpy, id, moves->values[move_index]);
+            board_apply_move(&cpy, &move);
+
+            if (not king_in_check(&cpy, player))
+                append_dynamic(legal_moves, moves->values[move_index]);
+        }
+
+        free_dynamic(moves);
+        return legal_moves;
+    }
+    
     return moves;
 }
 
@@ -440,7 +454,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         if (move->from_file && (x != move->from_file - 'a')) continue;
         if (move->from_rank && (y != move->from_rank - '1')) continue;
 
-        legal = generate_legal_moves(move->piece_id, *board, i, true);
+        legal = generate_legal_moves(move->piece_id, *board, i, true, true);
         if (!legal) continue;
 
         for (int j = 0; j < legal->current_index; j++) {
@@ -503,30 +517,68 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
 
         if (color == PLAYER_WHITE) board->white_can_castle = false;
         else board->black_can_castle = false;
-}
+    }
 
-if (piece == PIECE_ROOK) {
-    if (color == PLAYER_WHITE and (from_id == from_cords(0, 0) or from_id == from_cords(7, 0)))
-        board->white_can_castle = false;
-    if (color == PLAYER_BLACK and (from_id == from_cords(0, GRID_SIZE-1) or from_id == from_cords(7, GRID_SIZE-1)))
-        board->black_can_castle = false;
-}
-
+    if (piece == PIECE_ROOK) {
+        if (color == PLAYER_WHITE and (from_id == from_cords(0, 0) or from_id == from_cords(7, 0)))
+            board->white_can_castle = false;
+        if (color == PLAYER_BLACK and (from_id == from_cords(0, GRID_SIZE-1) or from_id == from_cords(7, GRID_SIZE-1)))
+            board->black_can_castle = false;
+    }
 
     // switch player
     board->next_move_player = (color == PLAYER_WHITE) ? PLAYER_BLACK : PLAYER_WHITE;
 }
 
-bool player_in_check(const struct chess_board *board, int id_to_check)
+bool king_in_check(struct chess_board *board, enum chess_player player)
 {
-    struct dynamic_array *attacking_squares;
+    for (int id = 0; id < BOARD_SIZE; id++)
+    {
+        if (not board->piece_present[id]     ) continue;
+        if (board->piece_color[id] != player ) continue;
+        if (board->piece_id[id] != PIECE_KING) continue;
 
+        return player_in_check(board, id);
+    }
+    
+    return false;
+}
+
+bool player_in_check(struct chess_board *board, int id_to_check)
+{
+
+    // Optimize, check if the preivous check is still valid
+    struct dynamic_array *attacking_squares;
     enum chess_player player_color = board->piece_color[id_to_check];
+
+    if (board->last_check_id != -1)
+    {
+        int id = board->last_check_id;
+
+        if (board->piece_present[id] and board->piece_color[id] != player_color)
+        {
+            attacking_squares = generate_legal_moves(board->piece_id[id], *board, id, false, false);
+            
+            if (attacking_squares != NULL)            
+                for (int j = 0; j < attacking_squares->current_index; j++) 
+                {
+                    if (attacking_squares->values[j] == id_to_check)
+                    {
+                        free_dynamic(attacking_squares);
+                        return true;
+                    }
+                }
+            
+            free_dynamic(attacking_squares);
+        }
+    }
 
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
-            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false);
+            if (i == board->last_check_id) continue;
+
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false, false);
             
             if (attacking_squares == NULL)
                 continue;
@@ -535,6 +587,7 @@ bool player_in_check(const struct chess_board *board, int id_to_check)
             {
                 if (attacking_squares->values[j] == id_to_check)
                 {
+                    board->last_check_id = i;
                     free_dynamic(attacking_squares);
                     return true;
                 }
@@ -544,7 +597,111 @@ bool player_in_check(const struct chess_board *board, int id_to_check)
         }
     }
 
+    board->last_check_id = -1;
+
     return false;
+}
+
+void create_move(struct chess_move *move, struct chess_board *board, int from_id, int to_id)
+{
+    /*
+        enum chess_piece piece_id; // The moving piece id
+
+        int from_square;     // From which square id is the piece moving from
+        int to_square;       // To   which square id is the piece moving to
+        
+        bool is_capture;     // True if the moving piece is capturing a piece
+
+        int promotes_to_id;  // If a pawn is promoted, the new piece id; -1 otherwise
+
+        bool is_castle;      // True if the move is a castle
+        bool is_long_castle; // True if the move is a long castle
+
+        char from_file; // optional file disambiguation
+        char from_rank; // optional rank disambiguation
+    */
+
+    // Rest of the fields are optional for apply_move
+
+    move->piece_id = board->piece_id[from_id];
+
+    move->from_square = from_id;
+    move->to_square = to_id;
+
+    move->promotes_to_id = PIECE_UNKNOWN;
+}
+
+bool find_forced_mate(struct chess_board *board, int depth)
+{
+    struct dynamic_array *moves;
+    bool has_legal_move = false;
+    
+    for (int id = 0; id < BOARD_SIZE; id++)
+    {
+        if (not board->piece_present[id] or 
+            board->piece_color[id] != board->next_move_player) 
+            continue;
+
+        moves = generate_legal_moves(board->piece_id[id], *board, id, true, true);
+        
+        if (moves == NULL) continue;
+        
+        if (moves->current_index > 0)
+            has_legal_move = true;
+        
+        free_dynamic(moves);
+        
+        if (has_legal_move) break;
+    }
+    
+    if (not has_legal_move)
+        return king_in_check(board, board->next_move_player);
+    
+    if (depth >= MAX_DEPTH * 2)
+        return false;
+        
+    bool is_attacker_turn = depth % 2 == 0;
+    
+    for (int id = 0; id < BOARD_SIZE; id++)
+    {
+        if (not board->piece_present[id] or board->piece_color[id] != board->next_move_player) 
+            continue;
+
+        moves = generate_legal_moves(board->piece_id[id], *board, id, true, true);
+        
+        if (moves == NULL) continue;
+
+        for (int move_index = 0; move_index < moves->current_index; move_index++)
+        {
+            struct chess_board cpy;
+            struct chess_move move;
+            
+            create_board_copy(board, &cpy);
+            create_move(&move, &cpy, id, moves->values[move_index]);
+            board_apply_move(&cpy, &move);
+
+            bool mate_in_this_line = is_checkmate(&cpy, depth + 1);
+            
+            if (is_attacker_turn)
+            {
+                if (mate_in_this_line)
+                {
+                    free_dynamic(moves);
+                    return true;
+                }
+            } else {
+                if (not mate_in_this_line)
+                {
+                    free_dynamic(moves);
+                    return false;
+                }
+            }
+        }
+        
+        free_dynamic(moves);
+    }
+    
+    return not is_attacker_turn;
 }
 
 // Classify the state of the board, printing one of the following:
@@ -552,10 +709,46 @@ bool player_in_check(const struct chess_board *board, int id_to_check)
 // - white wins by checkmate
 // - black wins by checkmate
 // - draw by stalemate
-void board_summarize(const struct chess_board *board)
+void board_summarize(struct chess_board *board)
 {
-    for (int depth = 0; depth < MAX_DEPTH; depth++) 
+    bool has_legal_move = false;
+    
+    for (int id = 0; id < BOARD_SIZE; id++)
     {
+        if (not board->piece_present[id] or board->piece_color[id] != board->next_move_player) 
+            continue;
 
+        struct dynamic_array *moves = generate_legal_moves(board->piece_id[id], *board, id, true, true);
+        
+        if (moves != NULL and moves->current_index > 0)
+        {
+            has_legal_move = true;
+            free_dynamic(moves);
+            break;
+        }
+        
+        if (moves != NULL)
+            free_dynamic(moves);
+    }
+    
+    if (not has_legal_move)
+    {
+        if (king_in_check(board, board->next_move_player))
+        {
+            if (board->next_move_player == PLAYER_WHITE)
+                puts("black wins by checkmate");
+            else
+                puts("white wins by checkmate");
+        } else
+            puts("draw by stalemate");
+    } else {
+        if (find_forced_mate(board, 0))
+        {
+            if (board->next_move_player == PLAYER_WHITE)
+                puts("white wins by checkmate");
+            else
+                puts("black wins by checkmate");
+        } else
+            puts("game incomplete");
     }
 }

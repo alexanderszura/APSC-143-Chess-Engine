@@ -26,8 +26,8 @@ int main()
         }
     }
 
-    puts("----------------------------------------");
-    display_board(board);
+    // puts("----------------------------------------");
+    // display_board(board);
 
     board_summarize(&board);
 

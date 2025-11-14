@@ -40,6 +40,8 @@ struct chess_board
 
     bool white_can_castle;
     bool black_can_castle;
+
+    int last_check_id;
 };
 
 struct chess_move
@@ -58,8 +60,6 @@ struct chess_move
 
     char from_file; // optional file disambiguation
     char from_rank; // optional rank disambiguation
-
-
 };
 
 struct dynamic_array 
@@ -86,5 +86,7 @@ void print_dynamic(struct dynamic_array *arr);
 void parse_error(char c, char *debug);
 
 void print_move(struct chess_move move);
+
+void create_board_copy(const struct chess_board *board, struct chess_board *cpy);
 
 #endif
