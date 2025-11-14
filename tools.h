@@ -5,10 +5,7 @@
 
 #define or ||
 #define and &&
-<<<<<<< HEAD
-=======
 #define not !
->>>>>>> AS-Moves
 #define elif else if
 
 #define GRID_SIZE 8
@@ -70,15 +67,13 @@ int from_code(char *code);
 
 void display_board(struct chess_board board);
 
-<<<<<<< HEAD
-=======
 unsigned long hash(unsigned char *str);
+
 struct dynamic_array *init_dynamic();
 bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
 void free_dynamic();
 
->>>>>>> AS-Moves
 void parse_error(char c);
 
 #endif
