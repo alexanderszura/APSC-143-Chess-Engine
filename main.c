@@ -1,13 +1,12 @@
 #include "board.h"
 #include "parser.h"
 #include "tools.h"
+#include "stdio.h"
 
 // void test_parser();
 
 int main()
-{
-    // test_parser();
-    
+{    
     // Then run the normal chess game
     struct chess_board board;
     board_initialize(&board);
@@ -20,6 +19,8 @@ int main()
         board_complete_move(&board, &move);
         board_apply_move(&board, &move);
     }
+
+    display_board(board);
 
     board_summarize(&board);
     return 0;

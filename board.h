@@ -4,9 +4,6 @@
 #ifndef APSC143__BOARD_H
 #define APSC143__BOARD_H
 
-// Gets a lowercase string denoting the player.
-const char *player_string(enum chess_player player);
-
 char player_char(enum chess_player player);
 
 // Gets a lowercase string denoting the piece type.
@@ -36,7 +33,7 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move);
 // - draw by stalemate
 void board_summarize(const struct chess_board *board);
 
-struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id);
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castling);
 
 bool player_in_check(const struct chess_board *board, int id_to_check);
 bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_right);
