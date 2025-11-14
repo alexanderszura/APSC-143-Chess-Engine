@@ -185,7 +185,7 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castling)
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
 {
     int x, y;
     if (not from_id(id, &x, &y))
@@ -287,7 +287,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         bool castle_left, castle_right;
 
-        if (include_castling and check_for_castle(board, &castle_left, &castle_right))
+        if (check_for_castle(board, &castle_left, &castle_right))
         {
             int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
 
@@ -360,7 +360,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         bool left_castle, right_castle;
 
-        if (include_castling and check_for_castle(board, &left_castle, &right_castle))
+        if (check_for_castle(board, &left_castle, &right_castle))
         {
             int y = player == PLAYER_WHITE ? 0 : GRID_SIZE - 1;
 
@@ -391,14 +391,31 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
     int to_id = move->to_square;
 
     // castling
-    if (move->piece_id == PIECE_KING) {
+    if (move->is_castle && move->piece_id == PIECE_KING) {
         int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
         int king_home = from_cords(KING_X_LOCATION, home_y);
-
-        if ((to_id == from_cords(6, home_y) or to_id == from_cords(2, home_y)) and
-            board->piece_id[king_home] == PIECE_KING and
+        
+        if (move->is_long_castle) {
+            move->to_square = from_cords(2, home_y); // queen-side
+        } else {
+            move->to_square = from_cords(6, home_y); // king-side  
+        }
+        to_id = move->to_square;
+        
+        if (board->piece_id[king_home] == PIECE_KING and
             board->piece_color[king_home] == color) {
-            move->from_square = king_home;
+            
+            bool castle_left = false, castle_right = false;
+            if (check_for_castle(*board, &castle_left, &castle_right)) {
+                bool king_side = !move->is_long_castle;
+                if ((king_side and castle_right) or (!king_side and castle_left)) {
+                    move->from_square = king_home;
+                    return;
+                }
+            }
+            printf("illegal move: %s king from %s to %s\n",
+                   color_string(color), square_string(king_home), square_string(to_id));
+            move->from_square = -1; 
             return;
         }
     }
@@ -417,7 +434,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         if (move->from_file && (x != move->from_file - 'a')) continue;
         if (move->from_rank && (y != move->from_rank - '1')) continue;
 
-        legal = generate_legal_moves(move->piece_id, *board, i, true);
+        legal = generate_legal_moves(move->piece_id, *board, i);
         if (!legal) continue;
 
         for (int j = 0; j < legal->current_index; j++) {
@@ -438,9 +455,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         move->from_square = candidate;
     } else {
         printf("move completion error: %s %s to %s\n",
-        color_string(color),
-        piece_string(move->piece_id),
-        square_string(to_id));
+               color_string(color), piece_string(move->piece_id), square_string(to_id));
     }
 }
 
@@ -448,6 +463,10 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
     int from_id = move->from_square;
     int to_id   = move->to_square;
+    
+    if (from_id == -1) {
+        return;
+    }
     
     enum chess_piece piece = move->piece_id;
     enum chess_player color = board->piece_color[from_id];
@@ -464,7 +483,7 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
         int home_y = (color == PLAYER_WHITE) ? 0 : GRID_SIZE - 1;
         bool castle_left = false, castle_right = false;
 
-        check_for_castle(&castle_left, &castle_right);
+        check_for_castle(*board, &castle_left, &castle_right);
 
         // king-side castle
         if (from_id == from_cords(KING_X_LOCATION, home_y) and to_id == from_cords(6, home_y) and castle_right) {
@@ -501,7 +520,7 @@ bool player_in_check(const struct chess_board *board, int id_to_check)
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
-            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false);
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i);
             
             if (attacking_squares == NULL)
                 continue;

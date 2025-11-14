@@ -71,7 +71,7 @@ struct dynamic_array
 int from_cords(int x, int y);
 bool from_id(int id, int *x, int *y);
 int from_code(char *code);
-char *square_string(int id);
+const char *square_string(int id);
 
 void display_board(struct chess_board board);
 

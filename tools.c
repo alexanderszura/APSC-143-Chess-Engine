@@ -46,7 +46,7 @@ int from_code(char *code)
     return -1;
 }
 
-char *square_string(int id)
+const char *square_string(int id)
 {
     int x, y;
     from_id(id, &x, &y);
@@ -155,19 +155,6 @@ void free_dynamic(struct dynamic_array *arr)
         free(arr->values);
     
     free(arr);
-}
-
-void print_dynamic(struct dynamic_array *arr)
-{
-    if (arr->values == NULL) return;
-
-    printf("(%d", arr->values[0]);
-
-    for (unsigned int i = 1; i < arr->current_index; i++)
-    {
-        printf(", %d", arr->values[i]);
-    }
-    printf(")\n");
 }
 
 void print_dynamic(struct dynamic_array *arr)
