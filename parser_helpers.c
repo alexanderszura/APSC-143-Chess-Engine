@@ -110,4 +110,3 @@ void reset_fields(struct chess_move *move) {
     move->from_file = '\0';
     move->from_rank = '\0';
 }
-

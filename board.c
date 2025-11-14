@@ -440,19 +440,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         if (move->from_file && (x != move->from_file - 'a')) continue;
         if (move->from_rank && (y != move->from_rank - '1')) continue;
 
-        int x,y;
-        from_id(i, &x, &y);
-
-        if (move->from_file && (x != move->from_file - 'a')) continue;
-        if (move->from_rank && (y != move->from_rank - '1')) continue;
-
-        int x,y;
-        from_id(i, &x, &y);
-
-        if (move->from_file && (x != move->from_file - 'a')) continue;
-        if (move->from_rank && (y != move->from_rank - '1')) continue;
-
-        legal = generate_legal_moves(move->piece_id, *board, i);
+        legal = generate_legal_moves(move->piece_id, *board, i, true);
         if (!legal) continue;
 
         for (int j = 0; j < legal->current_index; j++) {
@@ -538,7 +526,7 @@ bool player_in_check(const struct chess_board *board, int id_to_check)
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
-            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i);
+            attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false);
             
             if (attacking_squares == NULL)
                 continue;
