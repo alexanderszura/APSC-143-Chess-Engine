@@ -55,6 +55,11 @@ struct chess_move
 
     bool is_castle;      // True if the move is a castle
     bool is_long_castle; // True if the move is a long castle
+
+    char from_file; // optional file disambiguation
+    char from_rank; // optional rank disambiguation
+
+
 };
 
 struct dynamic_array 
@@ -75,12 +80,8 @@ unsigned long hash(unsigned char *str);
 struct dynamic_array *init_dynamic();
 bool append_dynamic(      struct dynamic_array *arr, unsigned long value);
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value);
-<<<<<<< HEAD
-void free_dynamic();
-=======
 void free_dynamic(struct dynamic_array *arr);
 void print_dynamic(struct dynamic_array *arr);
->>>>>>> 5f4a76105025c4e5eeef0a4162c69d7681688a38
 
 void parse_error(char c);
 
