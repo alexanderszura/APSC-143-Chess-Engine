@@ -185,7 +185,7 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id)
+struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castle)
 {
     int x, y;
     if (not from_id(id, &x, &y))
@@ -285,6 +285,9 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
             if (not add_move(moves, board, x, y - i, player)) break;
         } while (not board.piece_present[from_cords(x, y - i)]);
 
+        if (not include_castle)
+            break;
+
         bool castle_left, castle_right;
 
         if (check_for_castle(board, &castle_left, &castle_right))
@@ -358,6 +361,9 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
             }
         }
 
+        if (not include_castle)
+            break;
+
         bool left_castle, right_castle;
 
         if (check_for_castle(board, &left_castle, &right_castle))
@@ -427,6 +433,18 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         if (not board->piece_present[i]) continue;
         if (board->piece_color[i] != color) continue;
         if (board->piece_id[i] != move->piece_id) continue;
+
+        int x,y;
+        from_id(i, &x, &y);
+
+        if (move->from_file && (x != move->from_file - 'a')) continue;
+        if (move->from_rank && (y != move->from_rank - '1')) continue;
+
+        int x,y;
+        from_id(i, &x, &y);
+
+        if (move->from_file && (x != move->from_file - 'a')) continue;
+        if (move->from_rank && (y != move->from_rank - '1')) continue;
 
         int x,y;
         from_id(i, &x, &y);

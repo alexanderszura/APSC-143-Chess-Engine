@@ -5,6 +5,8 @@
 #include "stdlib.h"
 #include "panic.h"
 
+#define DEBUG true
+
 int from_cords(int x, int y)
 {
     return y * GRID_SIZE + x;
@@ -170,20 +172,10 @@ void free_dynamic(struct dynamic_array *arr)
     free(arr);
 }
 
-void print_dynamic(struct dynamic_array *arr)
+void parse_error(char c, char *debug) 
 {
-    if (arr->values == NULL) return;
-
-    printf("(%d", arr->values[0]);
-
-    for (unsigned int i = 1; i < arr->current_index; i++)
-    {
-        printf(", %d", arr->values[i]);
-    }
-    printf(")\n");
-}
-
-void parse_error(char c) {
+    if (DEBUG)
+        puts(debug);
     panicf("parse error at character '%c'\n", c);
 }
 

@@ -21,12 +21,17 @@ int main()
         // Only apply move if completion was successful
         if (move.from_square != -1) {
             board_apply_move(&board, &move);
-            display_board(board);
+            // puts("----------------------------------------");
+            // display_board(board);
         }
     }
 
+    puts("----------------------------------------");
     display_board(board);
 
     board_summarize(&board);
+
+    puts("Succesfully finished the program");
+
     return 0;
 }
