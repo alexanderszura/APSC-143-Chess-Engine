@@ -68,20 +68,6 @@ bool parse_move(struct chess_move *move)
 
     }
 
-<<<<<<< HEAD
-void test_parser() {
-    struct chess_board board;
-    board_initialize(&board);
-    struct chess_move move;
-
-    printf("Enter a move: ");
-    
-    if (parse_move(&move, &board)) {
-        printf("Parsed: piece=%d, to=%d, capture=%s\n", 
-               move.piece_id, move.to_square, move.is_capture ? "yes" : "no");
-    } else {
-        printf("Parse failed\n");
-=======
 // testing block
 void test_parser() {
     struct chess_move move;
@@ -92,7 +78,6 @@ void test_parser() {
     if (parse_move(&move)) {
         printf("Move parsed: piece=%d, to=%d, capture=%d\n", 
                move.piece_id, move.to_square, move.is_capture);
->>>>>>> AS-Moves
     }
 }
 
