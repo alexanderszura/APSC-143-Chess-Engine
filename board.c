@@ -411,7 +411,7 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
     int to_id = move->to_square;
 
     // castling
-    if (move->is_castle && move->piece_id == PIECE_KING) {
+    if (move->is_castle and move->piece_id == PIECE_KING) {
         int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
         int king_home = from_cords(KING_X_LOCATION, home_y);
         
@@ -451,8 +451,8 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
         int x,y;
         from_id(i, &x, &y);
 
-        if (move->from_file && (x != move->from_file - 'a')) continue;
-        if (move->from_rank && (y != move->from_rank - '1')) continue;
+        if (move->from_file and (x != move->from_file - 'a')) continue;
+        if (move->from_rank and (y != move->from_rank - '1')) continue;
 
         legal = generate_legal_moves(move->piece_id, *board, i, true, true);
         if (!legal) continue;
@@ -708,15 +708,33 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
     return not is_attacker_turn;
 }
 
-void print_recommended_move(struct chess_move *move)
+void print_recommended_move(struct chess_move *move, enum chess_player player)
 {
-    const char *piece = piece_string(move->piece_id);
+    /*
+        If you are attempting the bonus, then in the case where the output is game incomplete, you must also
+        print out a second line of output, of the following form, describing the suggested move:
+        suggest PLAYER PIECE from SQUARE to SQUARE
+        If the suggested move is a castle, follow the convention of describing the king’s movement. If the suggested
+        move is a pawn promotion, then use the following extended form:
+        suggest PLAYER pawn from SQUARE to SQUARE promoting to PIECE
+    */
+
+    char *player_str = color_string(player);
+
+    const char *piece = NULL;
     char *from = square_string(move->from_square);
     char *to   = square_string(move->to_square);
-
-    // TODO: implement promotion and castling
     
-    printf("%s from %s to %s\n", piece, from, to);
+    if (move->promotes_to_id != PIECE_UNKNOWN)
+    {
+        piece = piece_string(move->promotes_to_id);
+        printf("%s pawn from %s, to %s promoting to %s\n", player_str, from, to, piece);
+    } elif (move->is_castle) {
+        puts(move->is_long_castle ? "O-O-O" : "O-O\n");
+    } else {
+        piece = piece_string(move->piece_id);
+        printf("%s %s from %s to %s\n", player_str, piece, from, to);
+    }
 }
 
 // Classify the state of the board, printing one of the following:
@@ -762,20 +780,11 @@ void board_summarize(struct chess_board *board)
 
     /* ------------ Move recommendations ------------ */
 
-    /*
-        If you are attempting the bonus, then in the case where the output is game incomplete, you must also
-        print out a second line of output, of the following form, describing the suggested move:
-        suggest PLAYER PIECE from SQUARE to SQUARE
-        If the suggested move is a castle, follow the convention of describing the king’s movement. If the suggested
-        move is a pawn promotion, then use the following extended form:
-        suggest PLAYER pawn from SQUARE to SQUARE promoting to PIECE
-    */
-
     struct chess_move *recommended_move = NULL; 
 
     if (find_forced_mate(board, 0, recommended_move))
     {
-        print_recommended_move(recommended_move);
+        print_recommended_move(recommended_move, board->next_move_player);
         return;
     }
 
