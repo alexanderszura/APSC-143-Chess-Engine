@@ -48,7 +48,7 @@ int from_code(char *code)
     return -1;
 }
 
-const char *square_string(int id)
+char *square_string(int id)
 {
     int x, y;
     from_id(id, &x, &y);

@@ -631,7 +631,7 @@ void create_move(struct chess_move *move, struct chess_board *board, int from_id
     move->promotes_to_id = PIECE_UNKNOWN;
 }
 
-bool find_forced_mate(struct chess_board *board, int depth)
+bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *recommended_move)
 {
     struct dynamic_array *moves;
     bool has_legal_move = false;
@@ -680,13 +680,17 @@ bool find_forced_mate(struct chess_board *board, int depth)
             create_move(&move, &cpy, id, moves->values[move_index]);
             board_apply_move(&cpy, &move);
 
-            bool mate_in_this_line = is_checkmate(&cpy, depth + 1);
+            bool mate_in_this_line = find_forced_mate(&cpy, depth + 1, recommended_move);
             
             if (is_attacker_turn)
             {
                 if (mate_in_this_line)
                 {
                     free_dynamic(moves);
+
+                    if (depth == 0)
+                        *recommended_move = move;
+
                     return true;
                 }
             } else {
@@ -741,14 +745,29 @@ void board_summarize(struct chess_board *board)
                 puts("white wins by checkmate");
         } else
             puts("draw by stalemate");
-    } else {
-        if (find_forced_mate(board, 0))
-        {
-            if (board->next_move_player == PLAYER_WHITE)
-                puts("white wins by checkmate");
-            else
-                puts("black wins by checkmate");
-        } else
-            puts("game incomplete");
+        
+        return;
     }
+
+    /* ------------ Move recommendations ------------ */
+
+    /*
+        If you are attempting the bonus, then in the case where the output is game incomplete, you must also
+        print out a second line of output, of the following form, describing the suggested move:
+        suggest PLAYER PIECE from SQUARE to SQUARE
+        If the suggested move is a castle, follow the convention of describing the king’s movement. If the suggested
+        move is a pawn promotion, then use the following extended form:
+        suggest PLAYER pawn from SQUARE to SQUARE promoting to PIECE
+    */
+
+    struct chess_move *recommended_move = NULL; 
+
+    if (find_forced_mate(board, 0, recommended_move))
+    {
+        printf("%s from %s to %s\n", piece_string(recommended_move->piece_id), square_string(recommended_move->from_square), square_string(recommended_move->to_square));
+        return;
+    }
+
+
+    // EDWARDS MOVE recommendation
 }
