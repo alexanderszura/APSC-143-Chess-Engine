@@ -708,6 +708,17 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
     return not is_attacker_turn;
 }
 
+void print_recommended_move(struct chess_move *move)
+{
+    const char *piece = piece_string(move->piece_id);
+    char *from = square_string(move->from_square);
+    char *to   = square_string(move->to_square);
+
+    // TODO: implement promotion and castling
+    
+    printf("%s from %s to %s\n", piece, from, to);
+}
+
 // Classify the state of the board, printing one of the following:
 // - game incomplete
 // - white wins by checkmate
@@ -764,7 +775,7 @@ void board_summarize(struct chess_board *board)
 
     if (find_forced_mate(board, 0, recommended_move))
     {
-        printf("%s from %s to %s\n", piece_string(recommended_move->piece_id), square_string(recommended_move->from_square), square_string(recommended_move->to_square));
+        print_recommended_move(recommended_move);
         return;
     }
 
