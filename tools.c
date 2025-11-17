@@ -48,7 +48,7 @@ int from_code(char *code)
     return -1;
 }
 
-const char *square_string(int id)
+char *square_string(int id)
 {
     int x, y;
     from_id(id, &x, &y);
@@ -190,4 +190,21 @@ void print_move(struct chess_move move)
         move.is_long_castle,
         move.promotes_to_id
     );
+}
+
+void create_board_copy(const struct chess_board *board, struct chess_board *cpy)
+{
+    cpy->last_check_id    = board->last_check_id;
+
+    cpy->next_move_player = board->next_move_player;
+    
+    cpy->white_can_castle = board->white_can_castle;
+    cpy->black_can_castle = board->black_can_castle;
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        cpy->piece_present[i] = board->piece_present[i];
+        cpy->piece_color[i]   = board->piece_color[i];
+        cpy->piece_id[i]      = board->piece_id[i];
+    }
 }
