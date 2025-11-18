@@ -28,7 +28,7 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move);
 
 bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *recommended_move);
 
-void print_recommended_move(struct chess_move *move);
+void print_recommended_move(struct chess_move *move, enum chess_player player);
 
 // Classify the state of the board, printing one of the following:
 // - game incomplete
