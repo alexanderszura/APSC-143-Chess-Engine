@@ -38,8 +38,10 @@ struct chess_board
     enum chess_player piece_color[BOARD_SIZE];
     enum chess_piece piece_id    [BOARD_SIZE];
 
-    bool white_can_castle;
-    bool black_can_castle;
+    bool white_can_castle_left;
+    bool white_can_castle_right;
+    bool black_can_castle_left;
+    bool black_can_castle_right;
 
     int last_check_id;
 };

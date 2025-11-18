@@ -26,8 +26,10 @@ int main()
         }
     }
 
-    // puts("----------------------------------------");
-    // display_board(board);
+    puts("----------------------------------------");
+    display_board(board);
+
+    puts("Summarizing Board");
 
     board_summarize(&board);
 

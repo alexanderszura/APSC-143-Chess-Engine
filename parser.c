@@ -12,7 +12,7 @@ bool parse_move(struct chess_move *move)
     char c = getc(stdin);
 
     // Check if we are at the end of input.
-    if (c == '\n' || c == '\r')
+    if (c == '\n' or c == '\r')
         return false;
 
     // castle check 

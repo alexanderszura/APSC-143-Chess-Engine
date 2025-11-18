@@ -1,0 +1,4 @@
+fools mate: f3 e5 g4
+
+pawn promotion - black move: e4 f5 exf5 g6 fxg6 e6 gxh7
+pawn promotion - white move: e4 f5 exf5 g6 fxg6 e6 gxh7 d6

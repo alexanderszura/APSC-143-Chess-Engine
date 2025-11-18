@@ -69,7 +69,7 @@ int parse_promotion() {
         return -1;
     }
     c = getc(stdin);
-    if (!is_piece(c) || c == 'K') parse_error(c, "pawn-promote"); // cannot promote 2 king
+    if (!is_piece(c) or c == 'K') parse_error(c, "pawn-promote"); // cannot promote 2 king
 
     switch(c) {
         case 'Q': return PIECE_QUEEN;
