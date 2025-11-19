@@ -82,6 +82,7 @@ const char *color_string(enum chess_player color)
 void board_initialize(struct chess_board *board)
 {
     board->last_check_id = PIECE_UNKNOWN;
+    board->pawn_double_file = -1;
 
     board->next_move_player = PLAYER_WHITE;
     
@@ -220,12 +221,16 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         int dir = player == PLAYER_WHITE ? 1 : -1;
 
         int pawn_spawn = player == PLAYER_WHITE ? 1 : GRID_SIZE - 2;
+        int en_passant_range = player == PLAYER_WHITE ? GRID_SIZE - 4 : 3;
 
         if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
         {
             add_move(moves, board, x, y + dir, player);
             if (y == pawn_spawn and not board.piece_present[from_cords(x, y + 2 * dir)])
+            {
+                board.pawn_double_file = x;
                 add_move(moves, board, x, y + 2 * dir, player);
+            }
         }
         
         if (x > 0 and board.piece_present[from_cords(x - 1, y + dir)]) // Capturing Left side
@@ -234,7 +239,10 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         if (x < GRID_SIZE - 1 and board.piece_present[from_cords(x + 1, y + dir)]) // Capturing Right side
             add_move(moves, board, x + 1, y + dir, player);
 
-        // TODO: Add en passant
+        // En Passant
+        if (board.pawn_double_file >= 0 and y == en_passant_range and abs(board.pawn_double_file - x) == 1)
+            add_move(moves, board, board.pawn_double_file, y + dir, player);
+
         break;
 
     case PIECE_KNIGHT:
@@ -510,6 +518,9 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
     int from_id = move->from_square;
     int to_id   = move->to_square;
+
+    int x = to_id % GRID_SIZE;
+    int y = to_id / GRID_SIZE;
     
     if (from_id == -1)
         return;
@@ -522,10 +533,22 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
 
     move_piece(board, from_id, to_id);
 
-    // promotion 
-    if (move->promotes_to_id != -1) {
-        board->piece_id[to_id] = move->promotes_to_id;
+    if (piece == PIECE_PAWN and abs(from_id - to_id) == 16)
+    {
+        board->pawn_double_file = x;
+    } else {
+        if (board->pawn_double_file >= 0 and abs(board->pawn_double_file - (from_id % GRID_SIZE)) == 1) {
+            int captured_pawn_y = y - (color == PLAYER_WHITE ? 1 : -1);
+            int captured_pawn_square = from_cords(x, captured_pawn_y);
+            board->piece_present[captured_pawn_square] = false;
+        }
+
+        board->pawn_double_file = -1;
     }
+
+    // promotion 
+    if (move->promotes_to_id != -1)
+        board->piece_id[to_id] = move->promotes_to_id;
 
     // castling
     if (piece == PIECE_KING) {
@@ -831,8 +854,6 @@ void board_summarize(struct chess_board *board)
         
         return;
     }
-
-    puts("game incomplete");
 
     /* ------------ Move recommendations ------------ */
 
