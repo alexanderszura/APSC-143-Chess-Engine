@@ -213,4 +213,6 @@ void create_board_copy(const struct chess_board *board, struct chess_board *cpy)
         cpy->piece_color[i]   = board->piece_color[i];
         cpy->piece_id[i]      = board->piece_id[i];
     }
+
+    cpy->pawn_double_file = board->pawn_double_file;
 }

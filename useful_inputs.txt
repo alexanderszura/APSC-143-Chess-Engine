@@ -2,3 +2,6 @@ fools mate: f3 e5 g4
 
 pawn promotion - black move: e4 f5 exf5 g6 fxg6 e6 gxh7
 pawn promotion - white move: e4 f5 exf5 g6 fxg6 e6 gxh7 d6
+
+en passant - parser: e4 e6 e5 d5 exd6
+en passant - engine: e4 e6 e5 d5

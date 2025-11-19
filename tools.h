@@ -44,6 +44,8 @@ struct chess_board
     bool black_can_castle_right;
 
     int last_check_id;
+
+    int pawn_double_file;
 };
 
 struct chess_move
