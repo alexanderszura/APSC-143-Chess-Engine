@@ -855,6 +855,8 @@ void board_summarize(struct chess_board *board)
         return;
     }
 
+    puts("game incomplete");
+
     /* ------------ Move recommendations ------------ */
 
     struct chess_move recommended_move;
