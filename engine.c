@@ -123,10 +123,11 @@ int Black_queenScore[64] = {
          00, 00, 05, 10, 10, 05, 00, 00      // Starting rank
 };
 
+// Edit these for 10 instead of -1000
 int White_kingScore[64] = {
          00, 00,10, 00, 00, 00,10, 00,    // Home rank (castling on c1,g1)
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
+      -10,-10,-10,-10,-10,-10,-10,-10,
+      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000, 
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
@@ -134,6 +135,7 @@ int White_kingScore[64] = {
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000     // Enemy rank
 };
 
+// Edit these for 10 instead of -1000
 int Black_kingScore[64] = {
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,     // Enemy rank
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
@@ -141,12 +143,15 @@ int Black_kingScore[64] = {
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
       -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
+      -10,-10,-10,-10,-10,-10,-10,-10,
          00, 00,10, 00, 00, 00,10, 00      // Home rank (castling on c8,g8)
 };
 
-int eval_material(bool color) {
-        int score = 0;
+int white_score_arrays[6];
+int black_score_arrays[6];
+
+float color_material_eval(bool color) {
+        float score = 0.0f;
 
         int numPawns = 0;
         int numKnights = 0;
@@ -175,129 +180,41 @@ int eval_material(bool color) {
                                 break;
                         case 3:
                                 numRooks++;
+                                break;
                         case 4:
                                 numQueens++;
+                                break;
                         case 5:
                                 break;
                 }
         }
 
-        score = (numPawns * materialValue[0]) + 
-                (numKnights * materialValue[1]) + 
-                (numBishops * materialValue[2]) + 
-                (numRooks + materialValue[3]) + 
-                (numQueens * materialValue[4]);
+        score = (numPawns * materialValue[PIECE_PAWN]) + 
+                (numKnights * materialValue[PIECE_KNIGHT]) + 
+                (numBishops * materialValue[PIECE_BISHOP]) + 
+                (numRooks + materialValue[PIECE_ROOK]) + 
+                (numQueens * materialValue[PIECE_QUEEN]);
 
     return score;
 }
 
-// 0 = white, 1 = black.
-float eval_squares() {
-        float white_score = 0.0f;
-        float black_score = 0.0f;
+float eval_material() {
+        float material_score = 0.0f;
+        material_score = color_material_eval(PLAYER_WHITE) - color_material_eval(PLAYER_BLACK);
+
+        return material_score;
+}
+
+float color_squares_eval(bool color) {
         float score = 0.0f;
+        int current_piece_id = 0;
 
         struct chess_board board;
 
-        // White Pawn
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_PAWN) {
-                                white_score = white_score + (materialValue[PIECE_PAWN] * White_pawnScore[i]);
-                        }
+        for (int i; i < 64; i++) {
+                if (board.piece_present[i] = true && board.piece_color[i] == color) {
+                        current_piece_id = board.piece_id[i];
+
                 }
         }
-
-        // White Knights
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_KNIGHT) {
-                                white_score = white_score + (materialValue[PIECE_KNIGHT] * White_knightScore[i]);
-                        }
-                }
-        }
-
-        // White Bishops
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_BISHOP) {
-                                white_score = white_score + (materialValue[PIECE_BISHOP] * White_bishopScore[i]);
-                        }
-                }
-        }
-
-        // White Rooks
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_ROOK) {
-                                white_score = white_score + (materialValue[PIECE_ROOK] * White_rookScore[i]);
-                        }
-                }
-        }
-
-        // White Queens
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_QUEEN) {
-                                white_score = white_score + (materialValue[PIECE_QUEEN] * White_queenScore[i]);
-                        }
-                }
-        }
-
-        // White King
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && !board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_KING) {
-                                white_score = white_score + (materialValue[PIECE_KING] * White_kingScore[i]);
-                        }
-                }
-        }
-
-        // Black Pawn
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_PAWN) {
-                                black_score = black_score + (materialValue[PIECE_PAWN] * Black_pawnScore[i]);
-                        }
-                }
-        }
-
-        // Black Knight
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_KNIGHT) {
-                                black_score = black_score + (materialValue[PIECE_KNIGHT] * Black_knightScore[i]);
-                        }
-                }
-        }
-
-        // Black Rook
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_ROOK) {
-                                black_score = black_score + (materialValue[PIECE_ROOK] * Black_rookScore[i]);
-                        }
-                }
-        }
-
-        // Black Queen
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_QUEEN) {
-                                black_score = black_score + (materialValue[PIECE_QUEEN] * Black_queenScore[i]);
-                        }
-                }
-        }
-
-        // Black King
-        for(int i = 0; i < 64; i++) {
-                if (board.piece_present[i] && board.piece_color[i]) {
-                        if (board.piece_id[i] == PIECE_KING) {
-                                black_score = black_score + (materialValue[PIECE_KING] * Black_kingScore[i]);
-                        }
-                }
-        }
-
-        score = white_score - black_score;
-        return score;
 }
