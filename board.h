@@ -20,6 +20,8 @@ void board_initialize(struct chess_board *board);
 // Panics if there is no piece which can make the specified move, or if there
 // are multiple possible pieces.
 void board_complete_move(const struct chess_board *board, struct chess_move *move);
+bool handle_castle_move(const struct chess_board *board, struct chess_move *move);
+int select_piece_for_move(const struct chess_board *board, struct chess_move *move, enum chess_player color);
 
 // Apply move to the board. The move must already be complete, i.e., the initial
 // square must be known. Panics if the move is not legal in the current board

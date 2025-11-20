@@ -3,7 +3,7 @@
 #include "tools.h"
 #include "stdio.h"
 
-void test_parser();
+// void test_parser();
 
 int main()
 {    
@@ -16,6 +16,7 @@ int main()
     struct chess_move move;
     while (parse_move(&move))
     {
+        
         board_complete_move(&board, &move);
         
         // Only apply move if completion was successful

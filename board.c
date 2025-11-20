@@ -405,79 +405,120 @@ static void move_piece(struct chess_board *board, int from, int to) {
 }
 
 // fill in missing info in a parsed board state, report move completion error if cant be determined 
-void board_complete_move(const struct chess_board *board, struct chess_move *move)
+bool handle_castle_move(const struct chess_board *board, struct chess_move *move)
 {
-    enum chess_player color = board->next_move_player; 
-    int to_id = move->to_square;
+    enum chess_player color = board->next_move_player;
+    int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
+    int king_home = from_cords(KING_X_LOCATION, home_y);
+    move->to_square = move->is_long_castle ? from_cords(2, home_y) : from_cords(6, home_y);
 
-    // castling
-    if (move->is_castle && move->piece_id == PIECE_KING) {
-        int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
-        int king_home = from_cords(KING_X_LOCATION, home_y);
-        
-        if (move->is_long_castle) {
-            move->to_square = from_cords(2, home_y); // queen-side
-        } else {
-            move->to_square = from_cords(6, home_y); // king-side  
-        }
-        to_id = move->to_square;
-        
-        if (board->piece_id[king_home] == PIECE_KING and
-            board->piece_color[king_home] == color) {
-            
-            bool castle_left = false, castle_right = false;
-            if (check_for_castle(*board, &castle_left, &castle_right)) {
-                bool king_side = !move->is_long_castle;
-                if ((king_side and castle_right) or (!king_side and castle_left)) {
-                    move->from_square = king_home;
-                    return;
-                }
+    if (board->piece_id[king_home] == PIECE_KING and board->piece_color[king_home] == color)
+    {
+        bool left = false, right = false;
+        if (check_for_castle(*board, &left, &right))
+        {
+            bool king_side = not move->is_long_castle;
+            if ((king_side and right) or (not king_side and left))
+            {
+                move->from_square = king_home;
+                return true;
             }
-            printf("illegal move: %s king from %s to %s\n",
-                   color_string(color), square_string(king_home), square_string(to_id));
-            move->from_square = -1; 
-            return;
         }
     }
 
-    int candidate = -1;
-    struct dynamic_array *legal = NULL;
+    printf("illegal move: %s king from %s to %s\n",
+           color_string(color), square_string(king_home), square_string(move->to_square));
+    move->from_square = -1;
+    return false;
+}
 
-    for (int i = 0; i < BOARD_SIZE; i++) {
+int select_piece_for_move(const struct chess_board *board, struct chess_move *move, enum chess_player color)
+{
+    int candidate = -1;
+
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
         if (not board->piece_present[i]) continue;
         if (board->piece_color[i] != color) continue;
         if (board->piece_id[i] != move->piece_id) continue;
 
-        int x,y;
+        int x, y;
         from_id(i, &x, &y);
+        if (move->from_file and x != move->from_file - 'a') continue;
+        if (move->from_rank and y != move->from_rank - '1') continue;
 
-        if (move->from_file && (x != move->from_file - 'a')) continue;
-        if (move->from_rank && (y != move->from_rank - '1')) continue;
+        struct dynamic_array *legal = generate_legal_moves(move->piece_id, *board, i, true, true);
+        if (not legal) continue;
 
-        legal = generate_legal_moves(move->piece_id, *board, i, true, true);
-        if (!legal) continue;
-
-        for (int j = 0; j < legal->current_index; j++) {
-            if (legal->values[j] == to_id) {
+        for (int j = 0; j < legal->current_index; j++)
+        {
+            if (legal->values[j] == move->to_square)
+            {
+                if (candidate != -1)
+                {
+                    free_dynamic(legal);
+                    printf("move completion error: %s %s to %s\n",
+                           color_string(color), piece_string(move->piece_id), square_string(move->to_square));
+                    return -1;
+                }
                 candidate = i;
-                free_dynamic(legal);
-                legal = NULL;
-                break;
             }
         }
-        if (candidate != -1) break;
-
         free_dynamic(legal);
-        legal = NULL;
     }
 
-    if (candidate != -1) {
-        move->from_square = candidate;
-    } else {
+    if (candidate == -1)
+    {
         printf("move completion error: %s %s to %s\n",
-               color_string(color), piece_string(move->piece_id), square_string(to_id));
+               color_string(color), piece_string(move->piece_id), square_string(move->to_square));
+        return -1;
+    }
+
+    struct chess_board temp = *board;
+    temp.piece_present[candidate] = false;
+    temp.piece_present[move->to_square] = true;
+    temp.piece_id[move->to_square] = move->piece_id;
+    temp.piece_color[move->to_square] = color;
+
+    int king_square = -1;
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        if (temp.piece_present[i] and temp.piece_color[i] == color and temp.piece_id[i] == PIECE_KING)
+        {
+            king_square = i;
+            break;
+        }
+    }
+
+    if (king_square != -1 and player_in_check(&temp, king_square))
+    {
+        printf("illegal move: %s %s from %s to %s\n",
+               color_string(color), piece_string(move->piece_id),
+               square_string(candidate), square_string(move->to_square));
+        return -1;
+    }
+
+    return candidate;
+}
+
+
+// fill in missing info in a parsed board state, report move completion error if cant be determined 
+void board_complete_move(const struct chess_board *board, struct chess_move *move)
+{
+    enum chess_player color = board->next_move_player;
+
+    if (move->is_castle and move->piece_id == PIECE_KING)
+    {
+        if (!handle_castle_move(board, move)) return;
+    }
+    else
+    {
+        int candidate = select_piece_for_move(board, move, color);
+        if (candidate == -1) return;
+        move->from_square = candidate;
     }
 }
+
 
 void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {

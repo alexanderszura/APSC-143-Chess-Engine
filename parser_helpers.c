@@ -43,9 +43,16 @@ void expect_char(char expected) {
     }
 }
 
-int parse_square() {
-    char file = getc(stdin);
-    char rank = getc(stdin);
+int parse_square(char pre_file) {
+    char file, rank;
+    
+    if (pre_file) {
+        file = pre_file;
+        rank = getc(stdin);
+    } else {
+        file = getc(stdin);
+        rank = getc(stdin);
+    }
 
     if (!is_file(file)) parse_error(file, "square->file");
     if (!is_rank(rank)) parse_error(rank, "square->rank");
@@ -98,7 +105,6 @@ void parse_castle(struct chess_move *move) {
     // to_square will be set in board_complete_move based on current player and castle type
 }
 
-
 void reset_fields(struct chess_move *move) {
     move->is_capture = false;
     move->is_castle = false;
@@ -109,4 +115,46 @@ void reset_fields(struct chess_move *move) {
     move->piece_id = PIECE_UNKNOWN;
     move->from_file = '\0';
     move->from_rank = '\0';
+}
+
+int parse_disambiguation(char *from_file, char *from_rank) {
+    int c_consumed = 0;
+    int c = getc(stdin);
+
+    if (c == EOF) return 0;
+
+    // If the first character is 'x', it's a capture, not disambiguation
+    if (c == 'x') {
+        ungetc(c, stdin);
+        return 0;
+    }
+
+    if (c >= 'a' and c <= 'h') {
+        *from_file = c;
+        c_consumed ++;
+        c = getc(stdin);
+        if (c == EOF) return c_consumed;
+
+        // If next char is 'x', it's a capture after file disambiguation
+        if (c == 'x') {
+            ungetc(c, stdin);
+            return c_consumed;
+        }
+
+        if (c >= '1' and c <= '8') {
+            *from_rank = c;
+            c_consumed++;
+        } else {
+            ungetc(c, stdin);
+        }
+    }
+
+    else if (c >= '1' and c <= '8') {
+        *from_rank = c;
+        c_consumed++;
+    } else {
+        ungetc(c, stdin);
+    }
+
+    return c_consumed;
 }
