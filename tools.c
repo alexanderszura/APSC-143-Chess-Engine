@@ -154,7 +154,10 @@ bool append_dynamic(struct dynamic_array *arr, unsigned long value)
 
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
 {
-    for (unsigned int i = 0; i < arr->current_index - 1; i++)
+    if (arr == NULL || arr->values == NULL)
+        return false;
+        
+    for (unsigned int i = 0; i < arr->current_index; i++)
         if (arr->values[i] == value)
             return true;
 
@@ -198,8 +201,11 @@ void create_board_copy(const struct chess_board *board, struct chess_board *cpy)
 
     cpy->next_move_player = board->next_move_player;
     
-    cpy->white_can_castle = board->white_can_castle;
-    cpy->black_can_castle = board->black_can_castle;
+    cpy->white_can_castle_left = board->white_can_castle_left;
+    cpy->black_can_castle_left = board->black_can_castle_left;
+
+    cpy->white_can_castle_right = board->white_can_castle_right;
+    cpy->black_can_castle_right = board->black_can_castle_right;
 
     for (int i = 0; i < BOARD_SIZE; i++)
     {
@@ -207,6 +213,6 @@ void create_board_copy(const struct chess_board *board, struct chess_board *cpy)
         cpy->piece_color[i]   = board->piece_color[i];
         cpy->piece_id[i]      = board->piece_id[i];
     }
+
+    cpy->pawn_double_file = board->pawn_double_file;
 }
-
-

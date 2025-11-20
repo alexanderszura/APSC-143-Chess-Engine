@@ -16,6 +16,8 @@ bool parse_move(struct chess_move *move)
 
     if (c == '\n' or c == '\r' or c == EOF) {
         ungetc(c, stdin);
+    // Check if we are at the end of input.
+    if (c == '\n' or c == '\r')
         return false;
     }
 
