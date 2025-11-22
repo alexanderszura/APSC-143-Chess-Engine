@@ -29,11 +29,13 @@ bool is_piece(char c) {
 }
 
 void skip_spaces() {
-    char c;
+    int c;
     while ((c = getc(stdin)) == ' ') {
-    ;}
-    ungetc(c, stdin);
-
+        ; 
+    }
+    if (c != EOF) {
+        ungetc(c, stdin);
+    }
 }
 
 void expect_char(char expected) {
@@ -76,7 +78,7 @@ int parse_promotion() {
         return -1;
     }
     c = getc(stdin);
-    if (!is_piece(c) or c == 'K') parse_error(c, "pawn-promote"); // cannot promote 2 king
+    if (!is_piece(c) or c == 'K') parse_error(c, "pawn-promote"); 
 
     switch(c) {
         case 'Q': return PIECE_QUEEN;
@@ -88,21 +90,40 @@ int parse_promotion() {
 }
 
 void parse_castle(struct chess_move *move) {
-    expect_char('O');
-    expect_char('-');
-    expect_char('O');
-
     char c = getc(stdin);
+    if (c != 'O') {
+        parse_error(c, "expected 'O'");
+        return;
+    }
+    
+    c = getc(stdin);
+    if (c != '-') {
+        parse_error(c, "expected '-'");
+        return;
+    }
+    
+    c = getc(stdin);
+    if (c != 'O') {
+        parse_error(c, "expected 'O'");
+        return;
+    }
+
+    c = getc(stdin);
     if (c == '-') {
-        expect_char('O');
+        c = getc(stdin);
+        if (c != 'O') {
+            parse_error(c, "expected 'O'");
+            return;
+        }
         move->is_long_castle = true;
     } else {
         ungetc(c, stdin);
         move->is_long_castle = false;
     }
+    
     move->is_castle = true;
     move->piece_id = PIECE_KING;
-    // to_square will be set in board_complete_move based on current player and castle type
+    move->to_square = -1;  
 }
 
 void reset_fields(struct chess_move *move) {
@@ -119,42 +140,43 @@ void reset_fields(struct chess_move *move) {
 
 int parse_disambiguation(char *from_file, char *from_rank) {
     int c_consumed = 0;
+    
     int c = getc(stdin);
-
     if (c == EOF) return 0;
-
-    // If the first character is 'x', it's a capture, not disambiguation
+    
     if (c == 'x') {
         ungetc(c, stdin);
         return 0;
     }
+    
+    if (is_file(c)) {
+        int next_c = getc(stdin);
+        ungetc(next_c, stdin);
+        ungetc(c, stdin);
 
-    if (c >= 'a' and c <= 'h') {
-        *from_file = c;
-        c_consumed ++;
-        c = getc(stdin);
-        if (c == EOF) return c_consumed;
-
-        // If next char is 'x', it's a capture after file disambiguation
-        if (c == 'x') {
-            ungetc(c, stdin);
-            return c_consumed;
+        if (is_rank(next_c)) {
+            return 0;
         }
-
-        if (c >= '1' and c <= '8') {
-            *from_rank = c;
+        
+        c = getc(stdin); 
+        if (from_file) *from_file = c;
+        c_consumed++;
+        
+        c = getc(stdin);
+        if (is_rank(c)) {
+            if (from_rank) *from_rank = c;
             c_consumed++;
         } else {
             ungetc(c, stdin);
         }
     }
-
-    else if (c >= '1' and c <= '8') {
-        *from_rank = c;
+    elif (is_rank(c)) {
+        if (from_rank) *from_rank = c;
         c_consumed++;
-    } else {
+    }
+    else {
         ungetc(c, stdin);
     }
-
+    
     return c_consumed;
 }

@@ -4,7 +4,7 @@ include(CTest)
 
 set(CMAKE_C_STANDARD 11)
 
-add_library(chess OBJECT board.c board.h parser.c parser.h panic.c panic.h tools.c tools.h parser_helpers.c parser_helpers.h)
+add_library(chess OBJECT board.c board.h parser.c parser.h panic.c panic.h tools.c tools.h parser_helpers.c parser_helpers.h moves.c moves.h)
 
 add_executable(chess-analysis main.c)
 add_executable(tests tests.c)

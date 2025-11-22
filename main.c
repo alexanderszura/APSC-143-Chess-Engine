@@ -1,4 +1,5 @@
 #include "board.h"
+#include "moves.h"
 #include "parser.h"
 #include "tools.h"
 #include "stdio.h"
