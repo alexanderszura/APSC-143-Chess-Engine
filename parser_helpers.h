@@ -18,4 +18,6 @@ bool parse_capture();
 
 void reset_fields(struct chess_move *move);
 
+int parse_disambiguation(char *from_file, char *from_rank);
+
 #endif
