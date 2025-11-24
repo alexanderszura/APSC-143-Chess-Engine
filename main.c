@@ -25,7 +25,8 @@ int main()
 
     board_summarize(&board);
 
-    puts("Finished!");
+    if (DEBUG)
+        puts("Finished!");
 
     return 0;
 }

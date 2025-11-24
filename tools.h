@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#define DEBUG true
+
 #define or ||
 #define and &&
 #define not !
