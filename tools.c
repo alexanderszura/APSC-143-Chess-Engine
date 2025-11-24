@@ -5,8 +5,6 @@
 #include "stdlib.h"
 #include "panic.h"
 
-#define DEBUG true
-
 int from_cords(int x, int y)
 {
     return y * GRID_SIZE + x;
