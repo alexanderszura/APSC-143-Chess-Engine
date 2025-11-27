@@ -4,9 +4,6 @@
 #include "stdlib.h"
 #include "moves.h"
 
-#define MAX_DEPTH 3 
-#define KING_X_LOCATION 4
-
 char player_char(enum chess_player player)
 {
     switch (player)
@@ -219,39 +216,6 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-bool handle_castle_move(const struct chess_board *board, struct chess_move *move)
-{
-    enum chess_player color = board->next_move_player; 
-    int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
-    int king_home = from_cords(KING_X_LOCATION, home_y);
-    
-    if (move->is_long_castle) {
-        move->to_square = from_cords(2, home_y);
-    } else {
-        move->to_square = from_cords(6, home_y);
-    }
-    
-    if (board->piece_id[king_home] == PIECE_KING and
-        board->piece_color[king_home] == color) {
-        
-        bool castle_left = false, castle_right = false;
-        if (check_for_castle(*board, &castle_left, &castle_right)) {
-            bool king_side = !move->is_long_castle;
-            if ((king_side and castle_right) or (!king_side and castle_left)) {
-                move->from_square = king_home;
-                return true;
-            }
-        }
-        printf("illegal move: %s castle\n", color_string(color));
-        move->from_square = -1; 
-        return false;
-    }
-    
-    printf("illegal move: %s king not in starting position\n", color_string(color));
-    move->from_square = -1;
-    return false;
-}
-
 bool king_in_check(struct chess_board *board, enum chess_player player)
 {
     for (int id = 0; id < BOARD_SIZE; id++)
@@ -274,7 +238,7 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     {
         int id = board->last_check_id;
 
-        if (board->piece_present[id] && board->piece_color[id] != player_color)
+        if (board->piece_present[id] and board->piece_color[id] != player_color)
         {
             struct dynamic_array *attacking_squares = generate_legal_moves(board->piece_id[id], *board, id, false, false);
             
@@ -291,7 +255,7 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     }
 
     for (int i = 0; i < BOARD_SIZE; i++) {
-        if (board->piece_present[i] && board->piece_color[i] != player_color)
+        if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
             if (i == board->last_check_id) continue;
 
