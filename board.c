@@ -241,7 +241,7 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     {
         int id = board->last_check_id;
 
-        if (board->piece_present[id] && board->piece_color[id] != player_color)
+        if (board->piece_present[id] and board->piece_color[id] != player_color)
         {
             struct dynamic_array *attacking_squares = generate_legal_moves(board->piece_id[id], *board, id, false, false);
             
@@ -258,7 +258,7 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     }
 
     for (int i = 0; i < BOARD_SIZE; i++) {
-        if (board->piece_present[i] && board->piece_color[i] != player_color)
+        if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
             if (i == board->last_check_id) continue;
 
