@@ -4,9 +4,6 @@
 #include "stdlib.h"
 #include "moves.h"
 
-#define MAX_DEPTH 3 
-#define KING_X_LOCATION 4
-
 char player_char(enum chess_player player)
 {
     switch (player)
