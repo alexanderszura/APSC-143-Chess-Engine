@@ -219,39 +219,6 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
-bool handle_castle_move(const struct chess_board *board, struct chess_move *move)
-{
-    enum chess_player color = board->next_move_player; 
-    int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
-    int king_home = from_cords(KING_X_LOCATION, home_y);
-    
-    if (move->is_long_castle) {
-        move->to_square = from_cords(2, home_y);
-    } else {
-        move->to_square = from_cords(6, home_y);
-    }
-    
-    if (board->piece_id[king_home] == PIECE_KING and
-        board->piece_color[king_home] == color) {
-        
-        bool castle_left = false, castle_right = false;
-        if (check_for_castle(*board, &castle_left, &castle_right)) {
-            bool king_side = !move->is_long_castle;
-            if ((king_side and castle_right) or (!king_side and castle_left)) {
-                move->from_square = king_home;
-                return true;
-            }
-        }
-        printf("illegal move: %s castle\n", color_string(color));
-        move->from_square = -1; 
-        return false;
-    }
-    
-    printf("illegal move: %s king not in starting position\n", color_string(color));
-    move->from_square = -1;
-    return false;
-}
-
 bool king_in_check(struct chess_board *board, enum chess_player player)
 {
     for (int id = 0; id < BOARD_SIZE; id++)
