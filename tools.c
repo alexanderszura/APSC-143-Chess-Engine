@@ -5,11 +5,20 @@
 #include "stdlib.h"
 #include "panic.h"
 
+/// @brief From a set of coordinates returns an ID
+/// @param x x coordinate
+/// @param y y coordinate
+/// @return the id of the coordinate
 int from_cords(int x, int y)
 {
     return y * GRID_SIZE + x;
 }
 
+/// @brief From an id return a set of coordinates
+/// @param id the id to compute
+/// @param x the x position to return
+/// @param y the y position to return
+/// @return true if valid coordinates and if set
 bool from_id(int id, int *x, int *y)
 {
     if (id < 0 or id >= BOARD_SIZE)
@@ -24,6 +33,9 @@ bool from_id(int id, int *x, int *y)
     return true;
 }
 
+/// @brief From a string code return an id
+/// @param code the code to convert
+/// @return the id of the string, -1 if invalid
 int from_code(char *code)
 {
     char letter = *code++;
@@ -46,10 +58,14 @@ int from_code(char *code)
     return -1;
 }
 
+/// @brief From an id return a string of the characater code
+/// @param id the id to convert
+/// @return the string, returns NULL if invalid
 char *square_string(int id)
 {
     int x, y;
-    from_id(id, &x, &y);
+    if (not from_id(id, &x, &y))
+        return NULL;
 
     char letter = 'a' + x;
     char num = '1' + y;
@@ -62,6 +78,8 @@ char *square_string(int id)
     return str;
 }
 
+/// @brief Displays the board to the terminal
+/// @param board the board to display
 void display_board(struct chess_board board)
 {
     for (int y = GRID_SIZE - 1; y >= 0; y--)
@@ -79,6 +97,8 @@ void display_board(struct chess_board board)
     }
 }
 
+/// @brief Prints the dynamic array to the terminal for debugging
+/// @param arr the array to print
 void print_dynamic(struct dynamic_array *arr)
 {
     if (arr->values == NULL) return;
@@ -92,7 +112,9 @@ void print_dynamic(struct dynamic_array *arr)
     printf(")\n");
 }
 
+
 /**
+ * @deprecated unused
  * York University djb2 algorithm
  * http://www.cse.yorku.ca/~oz/hash.html
  */
@@ -107,6 +129,8 @@ unsigned long hash(unsigned char *str)
     return hash;
 }
 
+/// @brief Initializes a dynamic_array, mallocates memory for the array
+/// @return Returns a empty dynamic_array
 struct dynamic_array *init_dynamic()
 {
     struct dynamic_array *arr = malloc(sizeof(struct dynamic_array));
@@ -118,6 +142,10 @@ struct dynamic_array *init_dynamic()
     return arr;
 }
 
+/// @brief Append a value to a dyanmic_array
+/// @param arr the array to append to
+/// @param value the value to append
+/// @return returns true if succesful, false if there was an issue
 bool append_dynamic(struct dynamic_array *arr, unsigned long value)
 {
     if (arr == NULL)
@@ -150,9 +178,14 @@ bool append_dynamic(struct dynamic_array *arr, unsigned long value)
     return true;
 }
 
+/// @brief Search a dynamic array for a specific value
+/// @param arr the array to search
+/// @param value the value to search for
+/// @return true if found, false otherwise
+/// @deprecated unused
 bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
 {
-    if (arr == NULL || arr->values == NULL)
+    if (arr == NULL or arr->values == NULL)
         return false;
         
     for (unsigned int i = 0; i < arr->current_index; i++)
@@ -162,6 +195,8 @@ bool search_dynamic(const struct dynamic_array *arr, unsigned long value)
     return false;
 }
 
+/// @brief Frees the memory of a dynamic_array
+/// @param arr the dynamic_array to free
 void free_dynamic(struct dynamic_array *arr)
 {
     if (arr == NULL)
@@ -193,6 +228,9 @@ void print_move(struct chess_move move)
     );
 }
 
+/// @brief Creates a deep copy of a board
+/// @param board the board to copy from
+/// @param cpy the new board to set
 void create_board_copy(const struct chess_board *board, struct chess_board *cpy)
 {
     cpy->last_check_id    = board->last_check_id;

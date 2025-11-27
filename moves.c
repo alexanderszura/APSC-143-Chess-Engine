@@ -5,6 +5,13 @@
 #include "stdlib.h"
 #include "moves.h"
 
+/// @brief Generates all the legal moves for a piece on the board
+/// @param piece the piece generate legal moves for
+/// @param board the board state to generate legal moves on
+/// @param id the id to check on the board
+/// @param include_castle if the legal moves should include castling
+/// @param remove_moves_when_check if there should be legal moves removed when the king is in check
+/// @return A dyanmic array of all the possible move locations
 struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_board board, int id, bool include_castle, bool remove_moves_when_checked)
 {
     int x, y;
@@ -22,9 +29,13 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
     switch (piece)
     {
     case PIECE_PAWN:
+        // Which direction should the pawn move
         int dir = player == PLAYER_WHITE ? 1 : -1;
 
+        // Where the pawn spawns, for double movement
         int pawn_spawn = player == PLAYER_WHITE ? 1 : GRID_SIZE - 2;
+
+        // En passant location for the capturing pawn
         int en_passant_range = player == PLAYER_WHITE ? GRID_SIZE - 4 : 3;
 
         if (not board.piece_present[from_cords(x, y + dir)]) // If no piece in front of the pawn
@@ -32,6 +43,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
             add_move(moves, board, x, y + dir, player);
             if (y == pawn_spawn and not board.piece_present[from_cords(x, y + 2 * dir)])
             {
+                // Double move
                 board.pawn_double_file = x;
                 add_move(moves, board, x, y + 2 * dir, player);
             }
@@ -50,6 +62,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
 
     case PIECE_KNIGHT:
+        // Legal moves for knight
         add_move(moves, board, x + 1, y + 2, player);
         add_move(moves, board, x - 1, y + 2, player);
         add_move(moves, board, x + 1, y - 2, player);
@@ -62,6 +75,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
 
     case PIECE_BISHOP:
+        // Four directions for bishop, each moving in different diagonals
         i = 0;
         do {
             i++;
@@ -89,6 +103,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
 
     case PIECE_ROOK:
+        // Four directions for rook, each moving in different straight lines
         i = 0;
         do {
             i++;
@@ -115,6 +130,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         break;   
     case PIECE_QUEEN:
+        // Eight directions for queen, each moving in different diagonals and lines
         i = 0;
         do {
             i++;
@@ -165,6 +181,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
 
         break;
     case PIECE_KING:
+        // 3x3 grid of where the king can move, except for it's own location
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx == 0 and dy == 0) continue;
@@ -176,6 +193,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         if (not include_castle)
             break;
 
+        // Castling left and right checks
         bool left_castle, right_castle;
 
         if (check_for_castle(board, &left_castle, &right_castle))
@@ -191,6 +209,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
     }
     
+    // Remove non-legal moves when checked
     if (remove_moves_when_checked)
     {
         struct chess_board cpy;
@@ -204,6 +223,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
             create_move(&move, &cpy, id, moves->values[move_index]);
             board_apply_move(&cpy, &move);
 
+            // If the move resulted in the king not being in check then allow it
             if (not king_in_check(&cpy, player))
                 append_dynamic(legal_moves, moves->values[move_index]);
         }
@@ -215,6 +235,13 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
     return moves;
 }
 
+/// @brief Adds a move to a dynamic array
+/// @param moves The moves array to add to
+/// @param board The current board state
+/// @param x the x position of the move
+/// @param y the y position of the move
+/// @param color The color fo the chess piece
+/// @return 
 bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int y, enum chess_player color)
 {
     if (x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE)
@@ -224,8 +251,6 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
 
     if (board.piece_present[id] and board.piece_color[id] == color)
         return false;
-
-    // printf("Legal Move at (%d, %d) with id: %d\n", x, y, id);
 
     append_dynamic(moves, id);
 
@@ -384,7 +409,9 @@ void board_complete_move(const struct chess_board *board, struct chess_move *mov
     }
 }
 
-
+/// @brief Updates the caslting board booleans
+/// @param board the board to edit
+/// @param id the id of the piece to check
 void update_castling(struct chess_board *board, int id)
 {
     if (id == from_cords(0, 0))
@@ -522,6 +549,9 @@ void create_move(struct chess_move *move, struct chess_board *board, int from_id
     move->promotes_to_id = PIECE_UNKNOWN;
 }
 
+/// @brief Prints the recommended move to the terminal
+/// @param move The recommended move
+/// @param player which player is moving
 void print_recommended_move(struct chess_move *move, enum chess_player player)
 {
     /*
@@ -542,18 +572,23 @@ void print_recommended_move(struct chess_move *move, enum chess_player player)
     if (move->promotes_to_id != PIECE_UNKNOWN)
     {
         piece = piece_string(move->promotes_to_id);
-        printf("%s pawn from %s to %s promoting to %s\n", player_str, from, to, piece);
+        printf("suggest %s pawn from %s to %s promoting to %s\n", player_str, from, to, piece);
     } elif (move->is_castle) {
-        puts(move->is_long_castle ? "O-O-O" : "O-O");
+        // puts(move->is_long_castle ? "O-O-O" : "O-O");
+        printf("suggest %s king from %s to %s\n", player_str, from, to);
     } else {
         piece = piece_string(move->piece_id);
-        printf("%s %s from %s to %s\n", player_str, piece, from, to);
+        printf("suggest %s %s from %s to %s\n", player_str, piece, from, to);
     }
     
     free(from);
     free(to);
 }
 
+/// @brief Moves the piece on the board from a location to a location
+/// @param board the board to move the piece on
+/// @param from from id
+/// @param to to id
 void move_piece(struct chess_board *board, int from, int to) {
     board->piece_id[to] = board->piece_id[from];
     board->piece_color[to] = board->piece_color[from];
