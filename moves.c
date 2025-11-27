@@ -232,29 +232,40 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
     return true;
 };
 
+/*
+* Searches board for all pieces of the correct type and colour, and applies & checks which candidate can legally move to target square. 
+-> params: pointer to current board state, parsed move struct, the player whose move it is (color).
+-> return: board index of piece to execute the move, or -1 if no legal piece matches. 
+
+*/
 int select_piece_for_move(const struct chess_board *board, struct chess_move *move, enum chess_player color)
 {
-    int candidate = -1;
+    int candidate = -1; // tracks the candidate; which piece matches the move.
 
+    // iterate over every square on the board to find matching pieces.
     for (int i = 0; i < BOARD_SIZE; i++)
     {
+        // skip empty and irrelevant (does not belong to player) squares.
         if (!board->piece_present[i]) continue;
         if (board->piece_color[i] != color) continue;
         if (board->piece_id[i] != move->piece_id) continue;
 
         int x, y;
-        if (!from_id(i, &x, &y)) continue;
+        if (!from_id(i, &x, &y)) continue; // index -> coordinate conversion
 
+        // disambiguate if hint on file or rank.
         if (move->from_file and x != move->from_file - 'a') continue;
         if (move->from_rank and y != move->from_rank - '1') continue;
 
-        struct dynamic_array *legal = generate_legal_moves(move->piece_id, *board, i, true, true);
+        struct dynamic_array *legal = generate_legal_moves(move->piece_id, *board, i, true, true); // generate legal moves for the square. 
         if (!legal) continue;
 
+        // check if destination matches the move. 
         for (int j = 0; j < legal->current_index; j++)
         {
             if (legal->values[j] == move->to_square)
             {
+                // invalid if candidate was already found, it's ambiguous.
                 if (candidate != -1)
                 {
                     free_dynamic(legal);
@@ -267,16 +278,17 @@ int select_piece_for_move(const struct chess_board *board, struct chess_move *mo
         }
 
         free_dynamic(legal);
-        if (candidate != -1) break;
+        if (candidate != -1) break; // stop searching once correct piece is found. 
     }
 
-    if (candidate == -1)
+    if (candidate == -1) // no matching piece was found.
     {
         printf("move completion error: %s %s to %s\n",
                color_string(color), piece_string(move->piece_id), square_string(move->to_square));
         return -1;
     }
 
+    // simulate move on a temporary board to ensure it doesn't leave king in check.
     struct chess_board temp = *board;
     temp.piece_present[candidate] = false;
     temp.piece_present[move->to_square] = true;
@@ -304,21 +316,71 @@ int select_piece_for_move(const struct chess_board *board, struct chess_move *mo
     return candidate;
 }
 
+/*
+*Completes a move by identifying which exact piece moves. 
+-> params: pointer to current board, move structure to be completed.
 
+*uses select piece for move & castling helpers for code organization.
+*/
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
 {
     enum chess_player color = board->next_move_player;
 
+    // castling detection. 
     if (move->is_castle and move->piece_id == PIECE_KING)
     {
         if (!handle_castle_move(board, move)) return;
     }
     else
     {
+        // resolve which piece makes the move. 
         int candidate = select_piece_for_move(board, move, color);
         if (candidate == -1) return;
         move->from_square = candidate;
     }
+}
+
+/*
+*Determines correct destination square for king (based on short v long castle), verifies the legality of castling given the current board state, and updates move fields accordingly.
+->params: pointer to current chess board state, pointer to move structure being built.
+->return: boolean: true if castling is legal, move fields are filled, false if castling is illegal, move->from_square is set to -1.
+*/
+bool handle_castle_move(const struct chess_board *board, struct chess_move *move)
+{
+    // idenfify whose turn it is, the row where the player's king starts, and compute its board index. 
+    enum chess_player color = board->next_move_player; /
+    int home_y = color == PLAYER_WHITE ? 0 : GRID_SIZE-1;
+    int king_home = from_cords(KING_X_LOCATION, home_y);
+    
+    if (move->is_long_castle) {
+        move->to_square = from_cords(2, home_y);
+    } else { // short castle.
+        move->to_square = from_cords(6, home_y);
+    }
+    
+    // verify that the correct king os actually standing on its home square. 
+    if (board->piece_id[king_home] == PIECE_KING and
+        board->piece_color[king_home] == color) { 
+        
+        bool castle_left = false, castle_right = false;
+
+        // call to rules checker for which castling options are legal.
+        if (check_for_castle(*board, &castle_left, &castle_right)) {
+            bool king_side = !move->is_long_castle;
+            if ((king_side and castle_right) or (!king_side and castle_left)) { // ensure chosen direction (short/long) is permitted. 
+                move->from_square = king_home;
+                return true; // castling move is valid. 
+            }
+        }
+        // castling is illegal; mark move as invalid.
+        printf("illegal move: %s castle\n", color_string(color));
+        move->from_square = -1; 
+        return false;
+    }
+    // impossible castling; mark as invalid. 
+    printf("illegal move: %s king not in starting position\n", color_string(color));
+    move->from_square = -1;
+    return false;
 }
 
 
@@ -334,53 +396,67 @@ void update_castling(struct chess_board *board, int id)
         board->black_can_castle_right = false;
 }
 
+/*
+*Applies move to the actual board; performing captures, en passant, promotions, etc., while updating states.
+-> params: pointer to board to modify, fully determined move. 
+*/
 void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
     int from_id = move->from_square;
     int to_id   = move->to_square;
 
     if (from_id == -1)
-        return;
+        return; // invalid move state. 
 
+    // get coordinates for current & destination positions from indices. 
     int from_x = from_id % GRID_SIZE;
     int from_y = from_id / GRID_SIZE;
     int to_x   = to_id % GRID_SIZE;
     int to_y   = to_id / GRID_SIZE;
 
+    // store which piece is moving and its color. 
     enum chess_piece piece = move->piece_id;
     enum chess_player color = board->piece_color[from_id];
 
+    // handle en passant captures; pawn moving diagonally into an empty square.  
     if (piece == PIECE_PAWN and
         abs(to_x - from_x) == 1 and 
         !board->piece_present[to_id]) 
     {
-        int captured_y = (color == PLAYER_WHITE) ? to_y - 1 : to_y + 1;
-        int captured_square = from_cords(to_x, captured_y);
+        int captured_y = (color == PLAYER_WHITE) ? to_y - 1 : to_y + 1; // determine rank of the pawn that may be captures. (one behind for white, one ahead for white)
+        int captured_square = from_cords(to_x, captured_y); // convert into board_index.
 
+        // verify the eligbility of en passant. 
+        // check if the oponnent's pawn moved two squares in the previous turn and is currently sitting at capture square. 
         if (board->pawn_double_file == to_x and
             board->piece_present[captured_square] and
             board->piece_id[captured_square] == PIECE_PAWN and
             board->piece_color[captured_square] != color)
         {
+            // remove captured pawn. 
             board->piece_present[captured_square] = false;
             board->piece_id[captured_square] = PIECE_UNKNOWN;
             board->piece_color[captured_square] = PLAYER_UNKNOWN;
         }
     }
 
+    // if capturing a rook, update castling rights. 
     if (board->piece_present[to_id])
         update_castling(board, to_id);
 
-    move_piece(board, from_id, to_id);
+    move_piece(board, from_id, to_id); 
 
+    // track availability of en passant.
     if (piece == PIECE_PAWN and abs(to_y - from_y) == 2)
         board->pawn_double_file = from_x;
     else
         board->pawn_double_file = -1;
 
+    // handle pawn promotion.
     if (move->promotes_to_id != PIECE_UNKNOWN)
         board->piece_id[to_id] = move->promotes_to_id;
 
+    // handle king movement, including castling.
     if (piece == PIECE_KING)
     {
         int home_y = (color == PLAYER_WHITE) ? 0 : GRID_SIZE - 1;
@@ -388,11 +464,12 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
         if (move->is_castle) {
             if (move->is_long_castle) {
                 move_piece(board, from_cords(0, home_y), from_cords(3, home_y));
-            } else {
+            } else { // short castle
                 move_piece(board, from_cords(7, home_y), from_cords(5, home_y));
             }
         }
 
+        // king moved, disable castling.
         if (color == PLAYER_WHITE)
         {
             board->white_can_castle_left = false;
@@ -405,9 +482,12 @@ void board_apply_move(struct chess_board *board, const struct chess_move *move)
         }
     }
 
+
+    // if a rook moved, update castling rights accordingly.
     if (piece == PIECE_ROOK)
         update_castling(board, from_id);
 
+    // switch the active player. 
     board->next_move_player = (color == PLAYER_WHITE) ? PLAYER_BLACK : PLAYER_WHITE;
 }
 
