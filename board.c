@@ -84,9 +84,9 @@ void board_initialize(struct chess_board *board)
 
     board->next_move_player = PLAYER_WHITE;
     
-    board->white_can_castle_left = true;
+    board->white_can_castle_left  = true;
     board->white_can_castle_right = true;
-    board->black_can_castle_left = true;
+    board->black_can_castle_left  = true;
     board->black_can_castle_right = true;
 
     for (int i = 0; i < BOARD_SIZE; i++)
@@ -99,6 +99,7 @@ void board_initialize(struct chess_board *board)
     /* --------------- Setup Pawns --------------- */
     int white_cord = from_cords(0, 1);
     int black_cord = from_cords(0, GRID_SIZE - 2);
+
     for (int i = 0; i < GRID_SIZE; i++)
     {
         board->piece_id[white_cord] = PIECE_PAWN;
@@ -148,6 +149,7 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
 
     if (player_in_check(&board, from_cords(KING_X_LOCATION, y)))
     {
+        // If in check disallow castling
         *castle_left = false;
         *castle_right = false;
         return false;
@@ -216,10 +218,15 @@ bool check_for_castle(struct chess_board board, bool *castle_left, bool *castle_
     return *castle_left or *castle_right;
 }
 
+/// @brief Returns true if the king of the given color is in check
+/// @param board The current board state
+/// @param player The player to check
+/// @return true if in check false if not
 bool king_in_check(struct chess_board *board, enum chess_player player)
 {
     for (int id = 0; id < BOARD_SIZE; id++)
     {
+        // Find the colored king
         if (not board->piece_present[id]     ) continue;
         if (board->piece_color[id] != player ) continue;
         if (board->piece_id[id] != PIECE_KING) continue;
@@ -230,6 +237,10 @@ bool king_in_check(struct chess_board *board, enum chess_player player)
     return false;
 }
 
+/// @brief Returns true if the piece given is under attack
+/// @param board The current board state
+/// @param id_to_check The id to check
+/// @return true if under attack false if not
 bool player_in_check(struct chess_board *board, int id_to_check)
 {
     enum chess_player player_color = board->piece_color[id_to_check];
@@ -238,6 +249,11 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     {
         int id = board->last_check_id;
 
+        /*
+            Optimization:
+            Mostly for king checks,
+            check the last piece that attacked the king is still attacking the king.
+        */
         if (board->piece_present[id] and board->piece_color[id] != player_color)
         {
             struct dynamic_array *attacking_squares = generate_legal_moves(board->piece_id[id], *board, id, false, false);
@@ -254,11 +270,13 @@ bool player_in_check(struct chess_board *board, int id_to_check)
         }
     }
 
+    // Loop through all of the pieces
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board->piece_present[i] and board->piece_color[i] != player_color)
         {
-            if (i == board->last_check_id) continue;
+            if (i == board->last_check_id) continue; // Removed the optimized moved
 
+            // Check if any of the moves a piece can make can capture the piece to check
             struct dynamic_array *attacking_squares = generate_legal_moves(board->piece_id[i], *board, i, false, false);
             
             if (attacking_squares == NULL)
@@ -279,15 +297,21 @@ bool player_in_check(struct chess_board *board, int id_to_check)
     return false;
 }
 
+/// @brief Returns true if there is a way that which ever piece is next has a forced mate in 3 turns
+/// @param board the current board state
+/// @param depth the depth of the function, start at 0 if calling this from outside the function
+/// @param recommended_move the move to recommend
+/// @return true if theres a forced mate false otherwise.
 bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *recommended_move)
 {
     struct dynamic_array *moves;
     bool has_legal_move = false;
     
+    // Check if theres legal moves
     for (int id = 0; id < BOARD_SIZE; id++)
     {
-        if (not board->piece_present[id] or 
-            board->piece_color[id] != board->next_move_player) 
+        // If it's not the pieces turn or there isn't a piece present then disregard
+        if (not board->piece_present[id] or board->piece_color[id] != board->next_move_player) 
             continue;
 
         moves = generate_legal_moves(board->piece_id[id], *board, id, true, true);
@@ -302,16 +326,17 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
         if (has_legal_move) break;
     }
     
-    if (not has_legal_move)
+    if (not has_legal_move) // Checkmate if true
         return king_in_check(board, board->next_move_player);
     
-    if (depth >= MAX_DEPTH * 2)
+    if (depth >= MAX_DEPTH * 2) // Exit if we are at the max depth
         return false;
         
     bool is_attacker_turn = depth % 2 == 0;
     
     for (int id = 0; id < BOARD_SIZE; id++)
     {
+        // If it's not the pieces turn or there isn't a piece present then disregard
         if (not board->piece_present[id] or board->piece_color[id] != board->next_move_player) 
             continue;
 
@@ -326,12 +351,14 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
             struct chess_board cpy;
             struct chess_move move;
             
+            // Create a copy of the board to apply pieces and look into the future
             create_board_copy(board, &cpy);
             create_move(&move, &cpy, id, moves->values[move_index]);
 
             int x, y;
             from_id(move.to_square, &x, &y);
 
+            // If the pawn is promoting, try all of the possible pawn promotions
             if (move.piece_id == PIECE_PAWN and (y == 0 or y == GRID_SIZE - 1))
             {
                 if (promotion_level == PIECE_UNKNOWN)
@@ -344,7 +371,6 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
                 
                 move_index--;
                 move.promotes_to_id = promotion_level;
-                // printf("Promotes to %d\n", move.promotes_to_id);
             }
 
             board_apply_move(&cpy, &move);
@@ -357,6 +383,7 @@ bool find_forced_mate(struct chess_board *board, int depth, struct chess_move *r
                 {
                     free_dynamic(moves);
 
+                    // Recommend the first move in the line
                     if (depth == 0)
                         *recommended_move = move;
 
@@ -386,6 +413,7 @@ void board_summarize(struct chess_board *board)
 {
     bool has_legal_move = false;
     
+    // Check if there is legal moves
     for (int id = 0; id < BOARD_SIZE; id++)
     {
         if (not board->piece_present[id] or board->piece_color[id] != board->next_move_player) 
@@ -406,6 +434,7 @@ void board_summarize(struct chess_board *board)
     
     if (not has_legal_move)
     {
+        // Check if there the king is in check
         if (king_in_check(board, board->next_move_player))
         {
             if (board->next_move_player == PLAYER_WHITE)
@@ -419,6 +448,8 @@ void board_summarize(struct chess_board *board)
     }
 
     /* ------------ Move recommendations ------------ */
+
+    puts("game incomplete");
 
     struct chess_move recommended_move;
 
