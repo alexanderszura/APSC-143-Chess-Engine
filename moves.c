@@ -191,7 +191,7 @@ struct dynamic_array *generate_legal_moves(enum chess_piece piece, struct chess_
         break;
     }
     
-    if (remove_moves_when_checked and king_in_check(&board, player))
+    if (remove_moves_when_checked)
     {
         struct chess_board cpy;
         struct dynamic_array *legal_moves = init_dynamic();
