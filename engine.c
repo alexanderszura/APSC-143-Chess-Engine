@@ -1,5 +1,3 @@
-// Chess engine evaluation - Edward S
-
 #include "stdio.h"
 #include "board.h"
 #include "board.c"
@@ -12,16 +10,17 @@ int materialValue[] = {
         3,     // Bishop
         5,     // Rook
         9,     // Queen
-        1      // King
+        1      // King (Arbitrary value, used so that the computer does not do king moves over and over).
 };
 
+
+// Each piece has a positional score based on their impact on the game.
+// The positional score are from black and white's perspectives.
+// The positional score is multiplied by the piece's material value to get the final positional score.
+// Strong knights can be better than bad rooks, for example.
 int White_pawnScore[64] = {
         00, 00, 00, 00, 00, 00, 00, 00,     // Starting rank
-<<<<<<< Updated upstream
-        10, 10, 10, 05, 05, 15, 10, 10,     // F-pawn protects king diagonal
-=======
         10, 10, 10, 05, 05, 15, 10, 10,     // F-pawn protects king diagonal (against Qg5)
->>>>>>> Stashed changes
         05, 05, 05, 05, 05, 00, 05, 05,
         00, 05, 05, 20, 20, 05, 05, 05,     // Centerpawns
         10, 10, 10, 10, 10, 10, 10, 10,
@@ -127,35 +126,30 @@ int Black_queenScore[64] = {
          00, 00, 05, 10, 10, 05, 00, 00      // Starting rank
 };
 
-<<<<<<< Updated upstream
-// Edit these for 10 instead of -1000
 int White_kingScore[64] = {
-         00, 00,10, 00, 00, 00,10, 00,    // Home rank (castling on c1,g1)
+        00, 00, 10, 00, 00, 00, 10, 00,    // Home rank (castling on c1,g1)
       -10,-10,-10,-10,-10,-10,-10,-10,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000, 
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000     // Enemy rank
+      00, 00, 00, 00, 00, 00, 00, 00, 
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00       // Enemy rank
 };
 
-// Edit these for 10 instead of -1000
 int Black_kingScore[64] = {
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,     // Enemy rank
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
-      -1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,
+      00, 00, 00, 00, 00, 00, 00, 00,     // Enemy rank
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
+      00, 00, 00, 00, 00, 00, 00, 00,
       -10,-10,-10,-10,-10,-10,-10,-10,
-         00, 00,10, 00, 00, 00,10, 00      // Home rank (castling on c8,g8)
+        00, 00, 10, 00, 00, 00, 10, 00    // Home rank (castling on c8,g8)
 };
 
-int white_score_arrays[6];
-int black_score_arrays[6];
 
-float color_material_eval(bool color) {
+float color_material_eval(struct chess_board *board, bool color) {
         float score = 0.0f;
 
         int numPawns = 0;
@@ -164,13 +158,11 @@ float color_material_eval(bool color) {
         int numRooks = 0;
         int numQueens = 0;
 
-        struct chess_board board;
-
         for(int i = 0; i<64; i++) {
-                int current_piece;
+                int current_piece = -1;
 
-                if (board.piece_color[i] == color) {
-                   current_piece =  board.piece_id[i];
+                if (board->piece_present[i] && board->piece_color[i] == color) {
+                   current_piece =  board->piece_id[i];
                 }
 
                 switch(current_piece) {
@@ -197,123 +189,96 @@ float color_material_eval(bool color) {
         score = (numPawns * materialValue[PIECE_PAWN]) + 
                 (numKnights * materialValue[PIECE_KNIGHT]) + 
                 (numBishops * materialValue[PIECE_BISHOP]) + 
-                (numRooks + materialValue[PIECE_ROOK]) + 
+                (numRooks * materialValue[PIECE_ROOK]) + 
                 (numQueens * materialValue[PIECE_QUEEN]);
 
     return score;
-=======
-int White_kingScore[64] = {
-        0, 0, 10, 0, 0, 0, 10, 0,   // White castling positions have high scores -> c1, g1.
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0,     
-        0, 0, 0, 0, 0, 0, 0, 0      
-};
-
-int Black_kingScore[64] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 10, 0, 0, 0, 10, 0    // Black castling positions -> c8, g8.
-};
-
-const int *white_score_arrays[6] = {
-        White_pawnScore,
-        White_knightScore,
-        White_bishopScore,
-        White_rookScore,
-        White_queenScore,
-        White_kingScore
-};
-
-const int *black_score_arrays[6] = {
-        Black_pawnScore,
-        Black_knightScore,
-        Black_bishopScore,
-        Black_rookScore,
-        Black_queenScore,
-        Black_kingScore
-};
-
-float color_material_eval(const struct chess_board *board, enum chess_player color) {
-
-        float score = 0.0f;
-
-        int numPawns   = 0;
-        int numKnights = 0;
-        int numBishops = 0;
-        int numRooks   = 0;
-        int numQueens  = 0;
-
-        for (int i = 0; i < BOARD_SIZE; i++) {
-                if (board->piece_present[i] && board->piece_color[i] == color) {
-
-                        enum chess_piece current_piece = board->piece_id[i];
-
-                        switch (current_piece) {
-                        case PIECE_PAWN:
-                                numPawns++;
-                                break;
-                        case PIECE_KNIGHT:
-                                numKnights++;
-                                break;
-                        case PIECE_BISHOP:
-                                numBishops++;
-                                break;
-                        case PIECE_ROOK:
-                                numRooks++;
-                                break;
-                        case PIECE_QUEEN:
-                                numQueens++;
-                                break;
-                        case PIECE_KING:
-                                break;
-                        }
-                }
-        }
-
-        score = (numPawns   * materialValue[PIECE_PAWN]) +
-                (numKnights * materialValue[PIECE_KNIGHT]) +
-                (numBishops * materialValue[PIECE_BISHOP]) +
-                (numRooks   * materialValue[PIECE_ROOK]) +
-                (numQueens  * materialValue[PIECE_QUEEN]);
-
-        return score;
->>>>>>> Stashed changes
 }
 
-float eval_material() {
+float eval_material(struct chess_board *board) {
         float material_score = 0.0f;
-        material_score = color_material_eval(PLAYER_WHITE) - color_material_eval(PLAYER_BLACK);
+        material_score = color_material_eval(board, PLAYER_WHITE) - color_material_eval(board, PLAYER_BLACK);
 
         return material_score;
 }
 
-float color_squares_eval(bool color) {
+float color_squares_eval(struct chess_board *board, bool color) {
         float score = 0.0f;
         int current_piece_id = 0;
 
-        struct chess_board board;
+        for (int i = 0; i < 64; i++) {
+                if (board->piece_present[i] == true && board->piece_color[i] == color) {
+                        current_piece_id = board->piece_id[i];
 
-<<<<<<< Updated upstream
-        for (int i; i < 64; i++) {
-                if (board.piece_present[i] = true && board.piece_color[i] == color) {
-                        current_piece_id = board.piece_id[i];
+                        int *score_array = NULL;
+                        if (color == PLAYER_WHITE) {
+                                switch(current_piece_id) {
+                                        case PIECE_PAWN:
+                                                score_array = White_pawnScore;
+                                                break;
+                                        case PIECE_KNIGHT:
+                                                score_array = White_knightScore;
+                                                break;
+                                        case PIECE_BISHOP:
+                                                score_array = White_bishopScore;
+                                                break;
+                                        case PIECE_ROOK:
+                                                score_array = White_rookScore;
+                                                break;
+                                        case PIECE_QUEEN:
+                                                score_array = White_queenScore;
+                                                break;
+                                        case PIECE_KING:
+                                                score_array = White_kingScore;
+                                                break;
+                                }
+                        } else {
+                                switch(current_piece_id) {
+                                        case PIECE_PAWN:
+                                                score_array = Black_pawnScore;
+                                                break;
+                                        case PIECE_KNIGHT:
+                                                score_array = Black_knightScore;
+                                                break;
+                                        case PIECE_BISHOP:
+                                                score_array = Black_bishopScore;
+                                                break;
+                                        case PIECE_ROOK:
+                                                score_array = Black_rookScore;
+                                                break;
+                                        case PIECE_QUEEN:
+                                                score_array = Black_queenScore;
+                                                break;
+                                        case PIECE_KING:
+                                                score_array = Black_kingScore;
+                                                break;
+                                }
+                        }
 
-=======
-        for (int i = 0; i < BOARD_SIZE; i++) {
-                if (board.piece_present[i] = true && board.piece_color[i] == color) {
-                        current_piece_id = board.piece_id[i];
-
-                        
->>>>>>> Stashed changes
+                        // Add the positional evaluation for all pieces together to return the final score
+                        if (score_array != NULL) {
+                                score += score_array[i];
+                        }
                 }
         }
+
+        return score;
+}
+
+float positional_eval(struct chess_board *board) {
+        float positional_score = 0.0f;
+
+        positional_score = color_squares_eval(board, PLAYER_WHITE) - color_squares_eval(board, PLAYER_BLACK);
+
+        return positional_score;
+}
+
+
+//  Negative number means black is winning, positive means white is winning (same as other chess engines like stockfish).
+float evaluate_board(struct chess_board *board) {
+        float total_evaluation = 0.0f;
+
+        total_evaluation += eval_material(board);
+        total_evaluation += positional_eval(board);
+        return total_evaluation;
 }
