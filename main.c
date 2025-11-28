@@ -2,6 +2,7 @@
 #include "moves.h"
 #include "parser.h"
 #include "tools.h"
+#include "engine.h"
 #include "stdio.h"
 
 int main()
@@ -24,6 +25,9 @@ int main()
     display_board(board);
 
     board_summarize(&board);
+
+    print_evaluation(&board);
+    print_recommended_move(&board);
 
     if (DEBUG)
         puts("Finished!");

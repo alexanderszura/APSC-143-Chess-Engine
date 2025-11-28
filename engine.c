@@ -1,8 +1,7 @@
 #include "stdio.h"
 #include "board.h"
-#include "board.c"
 #include "tools.h"
-#include "tools.c"
+#include "moves.h"
 
 int materialValue[] = {
         1,     // Pawn
@@ -148,7 +147,6 @@ int Black_kingScore[64] = {
         00, 00, 10, 00, 00, 00, 10, 00    // Home rank (castling on c8,g8)
 };
 
-
 float color_material_eval(struct chess_board *board, bool color) {
         float score = 0.0f;
 
@@ -202,7 +200,7 @@ float eval_material(struct chess_board *board) {
         return material_score;
 }
 
-float color_squares_eval(struct chess_board *board, bool color) {
+float color_positional_eval(struct chess_board *board, bool color) {
         float score = 0.0f;
         int current_piece_id = 0;
 
@@ -268,11 +266,10 @@ float color_squares_eval(struct chess_board *board, bool color) {
 float positional_eval(struct chess_board *board) {
         float positional_score = 0.0f;
 
-        positional_score = color_squares_eval(board, PLAYER_WHITE) - color_squares_eval(board, PLAYER_BLACK);
+        positional_score = color_positional_eval(board, PLAYER_WHITE) - color_positional_eval(board, PLAYER_BLACK);
 
         return positional_score;
 }
-
 
 //  Negative number means black is winning, positive means white is winning (same as other chess engines like stockfish).
 float evaluate_board(struct chess_board *board) {
@@ -284,5 +281,83 @@ float evaluate_board(struct chess_board *board) {
 }
 
 void print_evaluation(struct chess_board *board) {
-        printf("Board evaluation: %.2f\n", evaluate_board(board));
+        printf("Engine: %.2f\n", evaluate_board(board));
+}
+
+void print_recommended_move(struct chess_board *board) {
+    struct chess_move best_move = {0};
+    float best_score;
+    
+    // If the move is white, then default score value is negative because the default score
+    // should be lower than any possible evaluation. If the move is black, then default score value 
+    //is positive because the default score should be higher than any possible evaluation.
+    if (board->next_move_player == PLAYER_WHITE) {
+        best_score = -999999.0f;
+    } else {
+        best_score = 999999.0f;
+    }
+    
+    for (int square = 0; square < 64; square++) {
+        if (board->piece_present[square] && board->piece_color[square] == board->next_move_player) {
+            int piece_id = board->piece_id[square];
+            
+            // Use the generate_leval_move from moves.c to get all the possible legal moves
+            // for the current position.
+            struct dynamic_array *legal_moves = generate_legal_moves(piece_id, *board, square, true, true);
+            
+            if (legal_moves == NULL) {
+                continue; // If no legal moves exist for that one piece, skip to next piece.
+            }
+            
+            // Evaluate each move using the evaluate_board (currently only positional and material)
+            for (unsigned int i = 0; i < legal_moves->current_index; i++) {
+                unsigned long move_target = legal_moves->values[i];
+                
+                // Creates the struct that contains the generated legal move.
+                struct chess_move move = {0};
+                move.from_square = square;
+                move.to_square = (int)move_target;
+                move.piece_id = piece_id;
+                
+                // Make the move on a copy of the board
+                struct chess_board board_copy = *board;
+                board_apply_move(&board_copy, &move);
+                
+                // Evaluate the position
+                float score = evaluate_board(&board_copy);
+                
+                // Update best move based on current player's perspective
+                if (board->next_move_player == PLAYER_WHITE) {
+                    // White maximizes (higher score is better)
+                    if (score > best_score) {
+                        best_score = score;
+                        best_move = move;
+                    }
+                } else {
+                    // Black minimizes (lower score is better)
+                    if (score < best_score) {
+                        best_score = score;
+                        best_move = move;
+                    }
+                }
+            }
+            
+            free_dynamic(legal_moves);
+        }
+    }
+    
+    // Print the best move in chess notation to the console.
+    if (best_move.from_square == 0 && best_move.to_square == 0) {
+        printf("No legal moves available\n");
+        return;
+    }
+    
+    int from_file = best_move.from_square % 8;
+    int from_rank = best_move.from_square / 8;
+    int to_file = best_move.to_square % 8;
+    int to_rank = best_move.to_square / 8;
+    
+    printf("Recommended move: %c%d%c%d\n", 
+           'a' + from_file, 8 - from_rank,
+           'a' + to_file, 8 - to_rank);
 }
