@@ -17,7 +17,11 @@ int materialValue[] = {
 
 int White_pawnScore[64] = {
         00, 00, 00, 00, 00, 00, 00, 00,     // Starting rank
+<<<<<<< Updated upstream
         10, 10, 10, 05, 05, 15, 10, 10,     // F-pawn protects king diagonal
+=======
+        10, 10, 10, 05, 05, 15, 10, 10,     // F-pawn protects king diagonal (against Qg5)
+>>>>>>> Stashed changes
         05, 05, 05, 05, 05, 00, 05, 05,
         00, 05, 05, 20, 20, 05, 05, 05,     // Centerpawns
         10, 10, 10, 10, 10, 10, 10, 10,
@@ -123,6 +127,7 @@ int Black_queenScore[64] = {
          00, 00, 05, 10, 10, 05, 00, 00      // Starting rank
 };
 
+<<<<<<< Updated upstream
 // Edit these for 10 instead of -1000
 int White_kingScore[64] = {
          00, 00,10, 00, 00, 00,10, 00,    // Home rank (castling on c1,g1)
@@ -196,6 +201,92 @@ float color_material_eval(bool color) {
                 (numQueens * materialValue[PIECE_QUEEN]);
 
     return score;
+=======
+int White_kingScore[64] = {
+        0, 0, 10, 0, 0, 0, 10, 0,   // White castling positions have high scores -> c1, g1.
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0,     
+        0, 0, 0, 0, 0, 0, 0, 0      
+};
+
+int Black_kingScore[64] = {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 10, 0, 0, 0, 10, 0    // Black castling positions -> c8, g8.
+};
+
+const int *white_score_arrays[6] = {
+        White_pawnScore,
+        White_knightScore,
+        White_bishopScore,
+        White_rookScore,
+        White_queenScore,
+        White_kingScore
+};
+
+const int *black_score_arrays[6] = {
+        Black_pawnScore,
+        Black_knightScore,
+        Black_bishopScore,
+        Black_rookScore,
+        Black_queenScore,
+        Black_kingScore
+};
+
+float color_material_eval(const struct chess_board *board, enum chess_player color) {
+
+        float score = 0.0f;
+
+        int numPawns   = 0;
+        int numKnights = 0;
+        int numBishops = 0;
+        int numRooks   = 0;
+        int numQueens  = 0;
+
+        for (int i = 0; i < BOARD_SIZE; i++) {
+                if (board->piece_present[i] && board->piece_color[i] == color) {
+
+                        enum chess_piece current_piece = board->piece_id[i];
+
+                        switch (current_piece) {
+                        case PIECE_PAWN:
+                                numPawns++;
+                                break;
+                        case PIECE_KNIGHT:
+                                numKnights++;
+                                break;
+                        case PIECE_BISHOP:
+                                numBishops++;
+                                break;
+                        case PIECE_ROOK:
+                                numRooks++;
+                                break;
+                        case PIECE_QUEEN:
+                                numQueens++;
+                                break;
+                        case PIECE_KING:
+                                break;
+                        }
+                }
+        }
+
+        score = (numPawns   * materialValue[PIECE_PAWN]) +
+                (numKnights * materialValue[PIECE_KNIGHT]) +
+                (numBishops * materialValue[PIECE_BISHOP]) +
+                (numRooks   * materialValue[PIECE_ROOK]) +
+                (numQueens  * materialValue[PIECE_QUEEN]);
+
+        return score;
+>>>>>>> Stashed changes
 }
 
 float eval_material() {
@@ -211,10 +302,18 @@ float color_squares_eval(bool color) {
 
         struct chess_board board;
 
+<<<<<<< Updated upstream
         for (int i; i < 64; i++) {
                 if (board.piece_present[i] = true && board.piece_color[i] == color) {
                         current_piece_id = board.piece_id[i];
 
+=======
+        for (int i = 0; i < BOARD_SIZE; i++) {
+                if (board.piece_present[i] = true && board.piece_color[i] == color) {
+                        current_piece_id = board.piece_id[i];
+
+                        
+>>>>>>> Stashed changes
                 }
         }
 }
