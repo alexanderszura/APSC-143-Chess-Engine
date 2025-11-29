@@ -4,16 +4,10 @@
 #include "panic.h"
 #include <assert.h>
 
-/*
-* Parses chess moves from standard input.
-
--> param: move is a pointer to chess_move struct where parsed move data (fields) will be stored. 
--> return: true if a valid move was successfully parsed, false otherwise.
-
-*note, helpers in "parser_helpers.c" were used for code organization.
-
-*/
-
+/// @brief parses chess moves from standard input
+/// @param move current move from standard input to be parsed (parsed data stored in chess_move struct fields)
+/// @note helpers in "parser_helpers.c" were used for code organization
+/// @return true if a valid move was successfully parsed, false otherwise 
 bool parse_move(struct chess_move *move)
 {
     // ensure the move pointer is valid, reset all current fields in the move struct, and skip any leading whitespace before parsing.
