@@ -258,12 +258,11 @@ bool add_move(struct dynamic_array *moves, struct chess_board board, int x, int 
 };
 
 
-/*
-* Searches board for all pieces of the correct type and colour, and applies & checks which candidate can legally move to target square. 
--> params: pointer to current board state, parsed move struct, the player whose move it is (color).
--> return: board index of piece to execute the move, or -1 if no legal piece matches. 
-
-*/
+/// @brief Searches board for all pieces of correct type and colour, and applies & checks which candidate can legally move to target square.
+/// @param board the current board state
+/// @param move the move being built.
+/// @param color the player whose move it is.
+/// @return board index of piece to execute the move, -1 if no legal piece matces
 int select_piece_for_move(const struct chess_board *board, struct chess_move *move, enum chess_player color)
 {
     int candidate = -1; // tracks the candidate; which piece matches the move.
@@ -342,11 +341,11 @@ int select_piece_for_move(const struct chess_board *board, struct chess_move *mo
     return candidate;
 }
 
-/*
-*Determines correct destination square for king (based on short v long castle), verifies the legality of castling given the current board state, and updates move fields accordingly.
-->params: pointer to current chess board state, pointer to move structure being built.
-->return: boolean: true if castling is legal, move fields are filled, false if castling is illegal, move->from_square is set to -1.
-*/
+
+/// @brief Determines correct destination square for king, verifies legality of castling, updates move fields accordingly
+/// @param board the current board state
+/// @param move the move being built.
+/// @return true if castling is legal, false if castling is illegal
 bool handle_castle_move(const struct chess_board *board, struct chess_move *move)
 {
     // idenfify whose turn it is, the row where the player's king starts, and compute its board index. 
@@ -385,12 +384,10 @@ bool handle_castle_move(const struct chess_board *board, struct chess_move *move
     return false;
 }
 
-/*
-*Completes a move by identifying which exact piece moves. 
--> params: pointer to current board, move structure to be completed.
-
-*uses select piece for move & castling helpers for code organization.
-*/
+/// @brief Completes a given move by identifying and handling which exact piece moves
+///  @note uses select piece for move & castling helpers for code organization.
+/// @param board the board to apply the move upon/modify
+/// @param move the move to be completed
 void board_complete_move(const struct chess_board *board, struct chess_move *move)
 {
     enum chess_player color = board->next_move_player;
@@ -424,10 +421,10 @@ void update_castling(struct chess_board *board, int id)
         board->black_can_castle_right = false;
 }
 
-/*
-*Applies move to the actual board; performing captures, en passant, promotions, etc., while updating states.
--> params: pointer to board to modify, fully determined move. 
-*/
+
+/// @brief Applies completed move to the board
+/// @param board the board to apply the move upon/modify
+/// @param move completed move 
 void board_apply_move(struct chess_board *board, const struct chess_move *move)
 {
     int from_id = move->from_square;

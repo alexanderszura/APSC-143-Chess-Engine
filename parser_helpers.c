@@ -10,7 +10,7 @@
 
 */
 
-// checks if character is a valid file. ('a' to 'h)
+/// @brief checks if character is a valid file. ('a' to 'h)
 bool is_file(char c) {
     if (c >= 'a' and c <= 'h') {
         return true; // valid file
@@ -18,7 +18,7 @@ bool is_file(char c) {
    return false;
 }
 
-// checks if character is a valid rank. (1 to 8)
+/// @brief checks if character is a valid rank. (1 to 8)
 bool is_rank(char c) {
     if (c >= '1' and c <= '8') {
         return true; // valid rank
@@ -26,7 +26,7 @@ bool is_rank(char c) {
     return false;
 }
 
-// checks if character is a chess piece; letters correspond to different moves. (N - knight, K - king, etc)
+/// @brief checks if character is a chess piece; letters correspond to different moves. (N - knight, K - king, etc)
 bool is_piece(char c) {
     switch (c) {
         case 'N':
@@ -40,7 +40,7 @@ bool is_piece(char c) {
     }
 }
 
-// skips whitespace characters in input. 
+/// @brief skips whitespace characters in input. 
 void skip_spaces() {
     int c;
     while ((c = getc(stdin)) == ' ') {
@@ -51,7 +51,7 @@ void skip_spaces() {
     }
 }
 
-// read the next character and verify it matches 'expected'; trigger a parse error if there isn't a match.
+/// @brief read the next character and verify it matches 'expected'; trigger a parse error if there isn't a match.
 void expect_char(char expected) {
     char c = getc(stdin);
     if (c != expected) {
@@ -59,7 +59,9 @@ void expect_char(char expected) {
     }
 }
 
-// parse a chessboard square (file+rank, e.g., "e4")
+/// @brief parse a chessboard square (file+rank, e.g., "e4")
+/// @param optional pre-read file character, if 0, file is read from standard input
+/// @return index of converted and validated file/rank
 int parse_square(char pre_file) {
     char file, rank;
     
@@ -79,8 +81,8 @@ int parse_square(char pre_file) {
     return (rank - '1') * 8 + (file - 'a'); // return the index converted file and rank.
 }
 
-// handle flagging for parsing for capture scenarios, called when 'x' is encountered. 
-// returns true if capture was found, otherwise returns false and pushes back the character. 
+/// @brief handle flagging for parsing for capture scenarios, called when 'x' is encountered
+/// @return returns true if capture was found, otherwise returns false and pushes back the character
 bool parse_capture() {
     char c = getc(stdin);
     if (c == 'x') {
@@ -90,8 +92,8 @@ bool parse_capture() {
     return false;
 }
 
-// handle parsing for promotion scenarios, called when the promotion symbol '=' is encountered. 
-// returns the ID of the promoted piece, or -1 if no promotion exists. 
+/// @brief handle parsing for promotion scenarios, called when the promotion symbol '=' is encountered
+/// @return returns the ID of the promoted piece, or -1 if no promotion exists
 int parse_promotion() {
     char c = getc(stdin);
     if (c != '=') { // check for '=' sign (promotion symbol).
@@ -111,8 +113,8 @@ int parse_promotion() {
     return -1; 
 }
 
-// handle parsing for castling scenario, called when the castling symbols 'O-O' 'O-O-O' are encountered.
-// updated move fields accordingly. 
+/// @brief handle parsing for castling scenario, called when the castling symbols 'O-O' 'O-O-O' are encountered.
+/// @details updated move fields accordingly. 
 void parse_castle(struct chess_move *move) {
     
     // castling symbol. (O, then '-', ....)
@@ -152,7 +154,7 @@ void parse_castle(struct chess_move *move) {
     move->to_square = -1;  
 }
 
-// resets all fields in chess_move object to default state. 
+/// @brief resets all fields in chess_move object to default state. 
 void reset_fields(struct chess_move *move) {
     move->is_capture = false;
     move->is_castle = false;
@@ -165,9 +167,11 @@ void reset_fields(struct chess_move *move) {
     move->from_rank = '\0';
 }
 
-// parse optional piece disambiguation. (file/rank)
-// used in moves like "Nbd2" (ambiguation is present);
-// writes result to from_file & from_rank (pointers) and returns the number of characters consumed from the input. 
+/// @brief parse optional piece disambiguation. (file/rank)
+/// @details used in moves like "Nbd2" (ambiguation is present);
+/// @param from_file output file character
+/// @param from_rank output rank character
+/// @return writes result to from_file & from_rank (pointers) and returns the number of characters consumed from the input. 
 int parse_disambiguation(char *from_file, char *from_rank) {
     int c_consumed = 0; // storage for number of consumed characters. 
     
